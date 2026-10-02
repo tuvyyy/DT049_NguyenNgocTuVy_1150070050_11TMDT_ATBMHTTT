@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Dataset không đưa vào Git project
+data/source/
+data/raw/
+data/processed/
+
+# Model/checkpoint có thể rất lớn
+models/
+
+# File tạm
+results/logs/
