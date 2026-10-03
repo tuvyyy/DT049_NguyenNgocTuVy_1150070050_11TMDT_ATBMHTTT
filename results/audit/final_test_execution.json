@@ -1,0 +1,43 @@
+{
+  "execution_name": "final_test_evaluation",
+  "timestamp_utc": "2026-10-03T11:17:57.021131+00:00",
+  "development_freeze_commit": "6ce11fb8bcb682c10e125219d0b964f394b8a5d2",
+  "protocol_commit": "6a0613b87a0a9d89c89b6ae848350b44c1aa1740",
+  "git_tag": "dt049-pretest-freeze",
+  "software_environment": {
+    "python": "3.14.7 (main, Sep  5 2026, 05:55:41) [GCC 16.2.0]",
+    "torch": "2.14.0+cpu",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "joblib": "1.6.0"
+  },
+  "scaler_sha256": "cbc43757fb1155a36285b711d9b134d387e20e9775a7ab19c8776749a9000d26",
+  "model_hashes": {
+    "ridge": "8985e6b46fad2b659a20cfd9bc1a3fc8f1d57be44ae3c6fec81bbd5cb3b7caff",
+    "gru_seed42": "48013cdb36a7490330ba615874399ff21f0a2c3f9b5f7f6edc756168233e2c3d",
+    "gru_seed43": "ac4bfb705c5dd28e114d32b7a9bc654dc2acc7875180f86f06c7661780d7c75c",
+    "gru_seed44": "34443577a9a3a91f2dbeddbb35481c9e1610f3e8d0f40fb360a67af960e3c660"
+  },
+  "frozen_primary_thresholds": {
+    "persistence": 1.6805225610733032,
+    "ridge": 1.4009277820587158,
+    "gru_seed42": 1.0585819482803345,
+    "gru_seed43": 1.1958686113357544,
+    "gru_seed44": 1.0768321752548218
+  },
+  "test_source_files": [
+    "test1.csv.gz",
+    "test2.csv.gz",
+    "test3.csv.gz",
+    "test4.csv.gz",
+    "test5.csv.gz"
+  ],
+  "common_timeline_rule": "target row index >= 30 within every official test recording independently",
+  "total_test_rows": 402005,
+  "total_scored_transitions": 401855,
+  "total_normal_hours": 109.1411,
+  "total_evaluable_attacks": 50,
+  "execution_duration_seconds": 167.55,
+  "measured_peak_rss_mb": 850.06
+}

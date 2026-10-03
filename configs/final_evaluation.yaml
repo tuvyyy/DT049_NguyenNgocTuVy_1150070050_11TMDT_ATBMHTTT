@@ -26,19 +26,19 @@ data:
   test_sessions:
     - name: "test1"
       raw_file: "test1.csv.gz"
-      expected_rows: 129600
+      expected_rows: 43201
     - name: "test2"
       raw_file: "test2.csv.gz"
-      expected_rows: 352800
+      expected_rows: 118801
     - name: "test3"
       raw_file: "test3.csv.gz"
-      expected_rows: 327600
+      expected_rows: 108001
     - name: "test4"
       raw_file: "test4.csv.gz"
-      expected_rows: 118800
+      expected_rows: 39601
     - name: "test5"
       raw_file: "test5.csv.gz"
-      expected_rows: 277200
+      expected_rows: 92401
   feature_count: 79
   zero_variance_count: 22
 

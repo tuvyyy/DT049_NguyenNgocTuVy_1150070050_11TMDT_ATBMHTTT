@@ -1,0 +1,6 @@
+model_id,model_name,operating_threshold,total_scored_transitions,total_normal_hours,evaluable_attacks,tp_detected,fn_missed,event_level_fp,total_predicted_alarms,event_precision,event_recall,event_f1,normal_fa_events,normal_fa_events_per_hour,false_positive_alarm_seconds_per_hour,point_fpr,delay_mean_sec,delay_median_sec,delay_std_sec,delay_min_sec,delay_max_sec,delay_p95_sec,detected_count
+persistence,Baseline 0: Persistence,1.6805225610733032,401855,109.1411,50,22,28,430,452,0.048673,0.44,0.087649,404,3.7016,3.9215,0.00108931,68.5,40.5,76.54,0.0,251.0,227.8,22
+ridge,Baseline 1: Ridge (alpha=300),1.4009277820587158,401855,109.1411,50,35,15,515,550,0.063636,0.7,0.116667,489,4.4804,6.5237,0.00181213,39.49,13.0,47.64,0.0,187.0,133.6,35
+gru_seed42,"Primary GRU (Seed 42, Canonical)",1.0585819482803345,401855,109.1411,50,40,10,335,375,0.106667,0.8,0.188235,308,2.822,5.8915,0.00163652,29.07,22.0,32.44,0.0,149.0,84.0,40
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",1.1958686113357544,401855,109.1411,50,39,11,317,356,0.109551,0.78,0.192118,297,2.7212,5.5433,0.0015398,31.1,21.0,32.41,0.0,149.0,84.0,39
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",1.0768321752548218,401855,109.1411,50,41,9,275,316,0.129747,0.82,0.224044,250,2.2906,5.3142,0.00147617,33.0,24.0,37.76,0.0,163.0,84.0,41
