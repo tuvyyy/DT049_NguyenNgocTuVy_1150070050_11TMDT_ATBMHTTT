@@ -3,17 +3,28 @@
 DT049 Streamlit UI Utilities
 ============================
 Helper functions for loading cached metrics, handling missing artifacts,
-and rendering figures safely in the Streamlit application.
+checking artifact health, rendering figures, and offering secure downloads
+in the Streamlit application.
 """
 
 import json
-import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple
 import pandas as pd
 import streamlit as st
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+HEALTH_ARTIFACTS = [
+    ("Final Test Summary CSV", "results/metrics/final_test_summary.csv"),
+    ("Final Attack Events CSV", "results/metrics/final_attack_events.csv"),
+    ("Final Test Execution Audit JSON", "results/audit/final_test_execution.json"),
+    ("Pre-Test Freeze Manifest JSON", "results/audit/pretest_freeze_manifest.json"),
+    ("Frozen Ridge Model Checkpoint", "models/baselines/ridge.joblib"),
+    ("Primary GRU Seed 42 Checkpoint", "models/primary/gru_w30_seed42.pt"),
+    ("Primary GRU Seed 43 Checkpoint", "models/primary/gru_w30_seed43.pt"),
+    ("Primary GRU Seed 44 Checkpoint", "models/primary/gru_w30_seed44.pt"),
+]
 
 
 @st.cache_data
@@ -51,7 +62,7 @@ def load_json(rel_path: str) -> Optional[Dict[str, Any]]:
 
 def display_figure(rel_path: str, caption: Optional[str] = None):
     """
-    Safely display a figure PNG relative to repository root.
+    Safely display a figure PNG relative to repository root without crashing if missing.
     """
     p = REPO_ROOT / rel_path
     if p.exists():
@@ -72,3 +83,59 @@ def format_rate(val) -> str:
     if pd.isna(val):
         return "N/A"
     return f"{float(val):.4f}"
+
+
+def check_artifact_health() -> Dict[str, Any]:
+    """
+    Non-destructively check the presence and size of the 8 required health artifacts.
+    """
+    details: List[Dict[str, Any]] = []
+    available = 0
+    for name, rel_path in HEALTH_ARTIFACTS:
+        p = REPO_ROOT / rel_path
+        exists = p.exists()
+        size = p.stat().st_size if exists else 0
+        if exists:
+            available += 1
+        details.append({
+            "name": name,
+            "path": rel_path,
+            "exists": exists,
+            "size_bytes": size,
+        })
+    return {
+        "total": len(HEALTH_ARTIFACTS),
+        "available": available,
+        "is_healthy": available == len(HEALTH_ARTIFACTS),
+        "details": details,
+    }
+
+
+def render_download_button(rel_path: str, label: str, file_name: Optional[str] = None, mime: str = "text/csv"):
+    """
+    Safely render a Streamlit download button for an existing result file.
+    Does not allow downloading files outside results/metrics/.
+    """
+    p = REPO_ROOT / rel_path
+    if not p.exists():
+        st.warning(f"File not available for download: `{rel_path}`")
+        return
+
+    # Security check: only allow results/metrics/ files
+    if not str(rel_path).startswith("results/metrics/"):
+        st.error(f"Download restricted: `{rel_path}` is outside allowed metrics directory.")
+        return
+
+    out_name = file_name or p.name
+    try:
+        with open(p, "rb") as f:
+            data = f.read()
+        st.download_button(
+            label=label,
+            data=data,
+            file_name=out_name,
+            mime=mime,
+            use_container_width=True,
+        )
+    except Exception as e:
+        st.error(f"Error reading `{rel_path}`: {e}")
