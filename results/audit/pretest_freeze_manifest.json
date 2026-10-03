@@ -1,0 +1,236 @@
+{
+  "manifest_name": "pretest_freeze_manifest",
+  "protocol_version": "1.0.0",
+  "freeze_timestamp_utc": "2026-10-03T09:30:00.000000+00:00",
+  "repository": {
+    "development_freeze_commit": "6ce11fb8bcb682c10e125219d0b964f394b8a5d2",
+    "git_branch": "main",
+    "hai_upstream_commit": "2a814cebc9a66b06c9e5cd545e2d72e65d383737",
+    "status": "Model development complete; all code, weights, configurations, and baseline/primary models permanently frozen in development freeze commit"
+  },
+  "scientific_integrity_statement": "Earlier dataset audit used official test data and labels for integrity and descriptive characterization, including attack-event structure. No test-derived information was used for model fitting, feature selection, hyperparameter or window selection, model selection, or threshold calibration.",
+  "software_environment": {
+    "python": "3.14.7 (main, Sep  5 2026, 05:55:41) [GCC 16.2.0]",
+    "torch": "2.14.0+cpu",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "joblib": "1.6.0"
+  },
+  "preprocessing_and_feature_pipeline": {
+    "feature_count": 79,
+    "train_zero_variance_features_count": 22,
+    "scaler_fit_source": "train1_features.npy + train2_features.npy (Development Training: 442,802 rows, strictly train-only)",
+    "scaler_file": "models/preprocessing/scaler.joblib",
+    "scaler_sha256": "cbc43757fb1155a36285b711d9b134d387e20e9775a7ab19c8776749a9000d26",
+    "scaler_metadata_file": "models/preprocessing/scaler_metadata.json",
+    "scaler_metadata_sha256": "1e428deea10be2d31a6198d4cf2936c990a702b9ce80354463bbe9b2a271b56a",
+    "development_training_arrays": {
+      "train1_features": {
+        "file": "data/processed/hai_21_03/train1_features.npy",
+        "sha256": "2e6f11e0b0324745aa2c75cbd6bffa340e12378c94bb9b6b2caa18a58f36a860",
+        "shape": [216001, 79]
+      },
+      "train2_features": {
+        "file": "data/processed/hai_21_03/train2_features.npy",
+        "sha256": "2f80b24c63bd268d61d177d471bce5b61330913dd323a27936a93db830d8050b",
+        "shape": [226801, 79]
+      }
+    },
+    "normal_validation_arrays": {
+      "train3_features": {
+        "file": "data/processed/hai_21_03/train3_features.npy",
+        "sha256": "266c634e358708b716047c5113a53d548c13dde691951562390888b7081a48f4",
+        "shape": [478801, 79]
+      },
+      "train3_timestamps": {
+        "file": "data/processed/hai_21_03/train3_timestamps.npy",
+        "sha256": "0084ca3e3255eea51b0e289e6197c8c15435667bcbf12c797d7390edaf72f2a1",
+        "shape": [478801]
+      }
+    }
+  },
+  "score_definition": {
+    "metric": "RMSE (normalized L2 residual) across the 79 standardized features",
+    "target_feature_count": 79,
+    "formula": "s_t = sqrt( (1 / 79) * sum_{j=1}^{79} (x_{t,j} - x_hat_{t,j})^2 )",
+    "accumulation_precision": "float64 accumulation of squared differences across 79 features"
+  },
+  "common_evaluation_timeline": {
+    "historical_window_requirement": 30,
+    "common_target_rule": "target row index >= 30 within every official test recording",
+    "baseline_exclusion_rule": "First 29 target predictions (indices 1..29) of Persistence and Ridge are excluded from primary cross-model comparison",
+    "session_independence": "Each test recording evaluated strictly independently; no window or prediction across session boundaries"
+  },
+  "frozen_models": {
+    "persistence_baseline_0": {
+      "model_type": "one_step_persistence",
+      "formula": "x_hat_{t+1} = x_t",
+      "features": 79,
+      "parameters": 0,
+      "calibration_source": "train3 full normal validation (478,800 transitions)",
+      "frozen_thresholds": {
+        "Q99.5": 1.293394923210144,
+        "Q99.9_primary": 1.6805225610733032,
+        "Q99.99": 1.8665313720703125
+      },
+      "thresholds_metadata_file": "results/metrics/baseline_persistence_thresholds.json",
+      "thresholds_metadata_sha256": "315273b45d36cadea8cfa63c0f6c7d021bef62c56a81c9380a0ad35d865335fb"
+    },
+    "ridge_baseline_1": {
+      "model_type": "one_step_ridge",
+      "alpha": 300.0,
+      "solver": "cholesky",
+      "fit_intercept": true,
+      "features": 79,
+      "weights_shape": [79, 79],
+      "intercept_shape": [79],
+      "calibration_source": "train3 full normal validation (478,800 transitions)",
+      "model_file": "models/baselines/ridge.joblib",
+      "model_sha256": "8985e6b46fad2b659a20cfd9bc1a3fc8f1d57be44ae3c6fec81bbd5cb3b7caff",
+      "metadata_file": "models/baselines/ridge_metadata.json",
+      "metadata_sha256": "b3ea2895db085c1143aeccf20049a0c7087390e74a103fdaa4d08b6647ca258d",
+      "frozen_thresholds": {
+        "Q99.5": 0.8517133593559265,
+        "Q99.9_primary": 1.4009277820587158,
+        "Q99.99": 1.4842363595962524
+      },
+      "thresholds_metadata_file": "results/metrics/baseline_ridge_thresholds.json",
+      "thresholds_metadata_sha256": "bc2c113211b03ec4d25d2935269cd8d78d710e6bd04dda051d3089acfe9d55f9"
+    },
+    "gru_primary": {
+      "model_type": "one_step_gru",
+      "selected_window": 30,
+      "architecture": {
+        "input_size": 79,
+        "hidden_size": 64,
+        "num_layers": 1,
+        "dropout": 0.0,
+        "output_size": 79,
+        "trainable_parameters": 32975
+      },
+      "training_hyperparameters": {
+        "loss": "MSE",
+        "optimizer": "Adam",
+        "learning_rate": 0.001,
+        "weight_decay": 1e-05,
+        "gradient_clipping_max_norm": 1.0,
+        "batch_size": 256,
+        "num_workers": 0,
+        "maximum_epochs": 50,
+        "early_stopping_patience": 5,
+        "early_stopping_min_delta": 1e-05
+      },
+      "metadata_file": "models/primary/gru_metadata.json",
+      "metadata_sha256": "453783636af47c6b42d22f53c9caf1d593cb4ec308f675e5f95398d3b20d21b1",
+      "thresholds_file": "results/metrics/gru_thresholds.json",
+      "thresholds_file_sha256": "3b9f80c719e690be5c9da18b6ba50af5c03be88420f7e38f0e4398733145eccf",
+      "canonical_seed": 42,
+      "stability_seeds": [43, 44],
+      "checkpoints": {
+        "seed_42": {
+          "role": "canonical_primary",
+          "file": "models/primary/gru_w30_seed42.pt",
+          "sha256": "48013cdb36a7490330ba615874399ff21f0a2c3f9b5f7f6edc756168233e2c3d",
+          "selected_epoch": 27,
+          "stop_epoch": 32,
+          "stop_reason": "early_stopping",
+          "frozen_thresholds": {
+            "Q99.5": 0.69571453332901,
+            "Q99.9_primary": 1.0585819482803345,
+            "Q99.99": 1.3762876987457275
+          }
+        },
+        "seed_43": {
+          "role": "stability_replicate",
+          "file": "models/primary/gru_w30_seed43.pt",
+          "sha256": "ac4bfb705c5dd28e114d32b7a9bc654dc2acc7875180f86f06c7661780d7c75c",
+          "selected_epoch": 17,
+          "stop_epoch": 22,
+          "stop_reason": "early_stopping",
+          "frozen_thresholds": {
+            "Q99.5": 0.8037216067314148,
+            "Q99.9_primary": 1.1958686113357544,
+            "Q99.99": 1.3592411279678345
+          }
+        },
+        "seed_44": {
+          "role": "stability_replicate",
+          "file": "models/primary/gru_w30_seed44.pt",
+          "sha256": "34443577a9a3a91f2dbeddbb35481c9e1610f3e8d0f40fb360a67af960e3c660",
+          "selected_epoch": 29,
+          "stop_epoch": 34,
+          "stop_reason": "early_stopping",
+          "frozen_thresholds": {
+            "Q99.5": 0.7136793732643127,
+            "Q99.9_primary": 1.0768321752548218,
+            "Q99.99": 1.3667151927947998
+          }
+        }
+      },
+      "stage_a_exploration_checkpoints": {
+        "w10_seed42": {
+          "file": "models/primary/gru_w10_seed42.pt",
+          "sha256": "507c5f33575c094a39e6fa4dd1c758fe5314f52b0caaa7d42493ca6d6601b501"
+        },
+        "w60_seed42": {
+          "file": "models/primary/gru_w60_seed42.pt",
+          "sha256": "464ced4dd45d15e6dc3c294efcbce44cd2ded3d906d5da6929b7b66127fa2b79"
+        }
+      }
+    }
+  },
+  "evaluation_rules": {
+    "alarm_condition": "alarm_t = score_t > threshold (score == threshold is classified as normal)",
+    "alarm_event_definition": "maximal contiguous run of alarm_t == True; no smoothing, no hysteresis, no alarm merging, no minimum-duration filter",
+    "ground_truth_attack_event_definition": "maximal contiguous run of attack == 1 within each individual test file; never merge across file boundaries",
+    "process_label_event_summary": {
+      "attack_P1_event": "any(attack_P1 == 1 within the event)",
+      "attack_P2_event": "any(attack_P2 == 1 within the event)",
+      "attack_P3_event": "any(attack_P3 == 1 within the event)",
+      "process_set": "List of active process tags during event, e.g. ['P1', 'P3']"
+    },
+    "event_matching_algorithm": {
+      "type": "deterministic one-to-one chronological matching",
+      "steps": [
+        "1. Sort ground-truth attack events by start time within each test file",
+        "2. Sort predicted alarm events by start time within each test file",
+        "3. For each ground-truth attack in chronological order, match earliest currently-unmatched predicted alarm event with non-zero temporal overlap with that attack",
+        "4. A predicted event can match at most one ground-truth attack event",
+        "5. A ground-truth attack event can match at most one predicted alarm event"
+      ],
+      "outcomes": {
+        "matched_pair": "Event-level True Positive (TP)",
+        "unmatched_evaluable_attack": "Event-level False Negative (FN)",
+        "unmatched_predicted_alarm_event": "Event-level False Positive (FP) (may include redundant chatter during an attack interval)"
+      }
+    },
+    "event_level_metrics": {
+      "event_precision": "matched_predicted_events / all_predicted_alarm_events (0.0 if all_predicted_alarm_events == 0)",
+      "event_recall": "detected_evaluable_attack_events / all_evaluable_attack_events (0.0 if all_evaluable_attack_events == 0)",
+      "event_f1": "2 * precision * recall / (precision + recall) (0.0 if precision + recall == 0.0)"
+    },
+    "detection_delay": {
+      "definition": "first alarm-positive timestamp inside evaluable attack interval minus effective attack start (seconds)",
+      "missed_attacks": "NA (null / NaN), strictly not recorded as infinity",
+      "aggregates": ["mean", "median", "std", "min", "max", "q95"]
+    },
+    "normal_false_alarm_metrics": {
+      "normal_exposure_definition": "scored timestamps with ground-truth attack == 0",
+      "normal_alarm_sequence": "normal_alarm_t = alarm_t AND (attack_t == 0) within each test file; attack timestamps break normal runs",
+      "normal_false_alarm_event_definition": "maximal contiguous run of normal_alarm_t == True",
+      "metrics": [
+        "normal_false_alarm_events_per_hour = number_of_normal_false_alarm_runs / normal_scored_exposure_hours",
+        "false_positive_alarm_seconds_per_hour = count_of_normal_samples_with_alarm_true / normal_scored_exposure_hours",
+        "point_false_positive_rate = count_of_normal_samples_with_alarm_true / count_of_normal_scored_samples"
+      ],
+      "demarcation": "Reported separately from event-level unmatched alarms; operational false-alarm burden strictly measures normal periods"
+    },
+    "multiseed_policy": {
+      "evaluation": "Evaluate seeds 42, 43, 44 independently under identical protocol",
+      "reporting": "Mean +/- standard deviation across seeds 42, 43, 44",
+      "canonical_model": "Seed 42 is the canonical primary model for headline timeline figures, demo, and representative attack plots",
+      "selection_constraint": "No post-hoc cherry-picking of best-performing seed on test"
+    }
+  }
+}

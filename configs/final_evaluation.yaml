@@ -1,0 +1,180 @@
+# ==============================================================================
+# Final Test Evaluation Protocol Configuration (DT049)
+# Dataset: Official HAI 21.03 Testbed (test1 - test5)
+# Scientific Integrity: Earlier dataset audit used official test data and labels
+# for integrity and descriptive characterization, including attack-event structure.
+# No test-derived information was used for model fitting, feature selection,
+# hyperparameter or window selection, model selection, or threshold calibration.
+# Development Freeze Commit: 6ce11fb8bcb682c10e125219d0b964f394b8a5d2
+# ==============================================================================
+
+version: "1.0.0"
+protocol_date: "2026-10-03"
+manifest_path: "results/audit/pretest_freeze_manifest.json"
+development_freeze_commit: "6ce11fb8bcb682c10e125219d0b964f394b8a5d2"
+
+environment:
+  num_threads: 4
+  num_interop_threads: 1
+  device: "cpu"
+  float_accumulation_precision: "float64"
+
+data:
+  raw_source_dir: "data/source/hai_repo/hai-21.03"
+  processed_dir: "data/processed/hai_21_03"
+  scaler_path: "models/preprocessing/scaler.joblib"
+  test_sessions:
+    - name: "test1"
+      raw_file: "test1.csv.gz"
+      expected_rows: 129600
+    - name: "test2"
+      raw_file: "test2.csv.gz"
+      expected_rows: 352800
+    - name: "test3"
+      raw_file: "test3.csv.gz"
+      expected_rows: 327600
+    - name: "test4"
+      raw_file: "test4.csv.gz"
+      expected_rows: 118800
+    - name: "test5"
+      raw_file: "test5.csv.gz"
+      expected_rows: 277200
+  feature_count: 79
+  zero_variance_count: 22
+
+common_evaluation_timeline:
+  historical_window_length: 30
+  minimum_target_row_index: 30
+  rule: "Target row index >= 30 within every official test recording"
+  baseline_exclusion_rule: "Exclude first 29 target predictions (indices 1..29) of Persistence and Ridge from cross-model comparison"
+  boundary_rule: "Strict session independence; never cross file boundaries"
+
+score_definition:
+  metric: "RMSE (normalized L2 residual) across the 79 standardized features"
+  dimension: 79
+  formula: "sqrt( mean( (x_t - x_hat_t)^2 ) )"
+
+models:
+  persistence_baseline_0:
+    name: "one_step_persistence"
+    display_name: "Baseline 0: Persistence"
+    formula: "x_hat_{t+1} = x_t"
+    primary_operating_threshold: 1.6805225610733032
+    sensitivity_thresholds:
+      Q99.5: 1.293394923210144
+      Q99.99: 1.8665313720703125
+
+  ridge_baseline_1:
+    name: "one_step_ridge"
+    display_name: "Baseline 1: Ridge (alpha=300)"
+    checkpoint_path: "models/baselines/ridge.joblib"
+    metadata_path: "models/baselines/ridge_metadata.json"
+    alpha: 300.0
+    solver: "cholesky"
+    fit_intercept: true
+    primary_operating_threshold: 1.4009277820587158
+    sensitivity_thresholds:
+      Q99.5: 0.8517133593559265
+      Q99.99: 1.4842363595962524
+
+  gru_primary:
+    name: "one_step_gru"
+    display_name: "Primary Model: One-Step GRU (W=30)"
+    window_size: 30
+    architecture:
+      input_size: 79
+      hidden_size: 64
+      num_layers: 1
+      dropout: 0.0
+      output_size: 79
+      trainable_parameters: 32975
+    batch_size: 512
+    canonical_seed: 42
+    stability_seeds: [42, 43, 44]
+    checkpoints:
+      42:
+        role: "canonical_primary"
+        path: "models/primary/gru_w30_seed42.pt"
+        primary_operating_threshold: 1.0585819482803345
+        sensitivity_thresholds:
+          Q99.5: 0.69571453332901
+          Q99.99: 1.3762876987457275
+      43:
+        role: "stability_replicate"
+        path: "models/primary/gru_w30_seed43.pt"
+        primary_operating_threshold: 1.1958686113357544
+        sensitivity_thresholds:
+          Q99.5: 0.8037216067314148
+          Q99.99: 1.3592411279678345
+      44:
+        role: "stability_replicate"
+        path: "models/primary/gru_w30_seed44.pt"
+        primary_operating_threshold: 1.0768321752548218
+        sensitivity_thresholds:
+          Q99.5: 0.7136793732643127
+          Q99.99: 1.3667151927947998
+
+event_definitions:
+  alarm_condition: "alarm_t = score_t > threshold (score == threshold is classified as normal)"
+  predicted_alarm_event: "maximal contiguous run of alarm_t == True; no smoothing, no hysteresis, no alarm merging, no min duration"
+  ground_truth_attack_event: "maximal contiguous run of attack == 1 within each test file; never merge across file boundaries"
+  process_label_summary:
+    attack_P1_event: "any(attack_P1 == 1 within event)"
+    attack_P2_event: "any(attack_P2 == 1 within event)"
+    attack_P3_event: "any(attack_P3 == 1 within event)"
+    process_set: "List of active process subsystems, e.g. ['P1', 'P3']"
+
+event_matching:
+  algorithm: "deterministic_one_to_one_chronological"
+  rules:
+    - "Sort ground-truth attack events by start timestamp within each test file"
+    - "Sort predicted alarm events by start timestamp within each test file"
+    - "For each ground-truth attack in chronological order, match earliest currently-unmatched predicted alarm event with non-zero temporal overlap"
+    - "A predicted event matches at most one ground-truth attack event"
+    - "A ground-truth event matches at most one predicted alarm event"
+  outcomes:
+    tp: "Matched pair = Event True Positive"
+    fn: "Unmatched evaluable attack = Event False Negative"
+    fp: "Unmatched predicted alarm event = Event-Level False Positive (used in Event Precision/F1; may include redundant chatter during an attack)"
+
+event_filtering:
+  smoothing: false
+  hysteresis: false
+  alarm_merging: false
+  minimum_duration_filter: false
+
+metrics:
+  event_level:
+    precision: "TP / (TP + FP)"
+    recall: "TP / (TP + FN)"
+    f1: "2 * precision * recall / (precision + recall)"
+    zero_denominator_handling: "0.0 if denominator is 0"
+  detection_delay:
+    definition: "first_alarm_in_evaluable_interval - effective_attack_start"
+    missed_attacks: "NA (null / NaN)"
+    summary_stats: ["mean", "median", "std", "min", "max", "q95"]
+  normal_false_alarms:
+    normal_definition: "attack == 0"
+    normal_alarm_sequence: "normal_alarm_t = alarm_t AND (attack_t == 0); attack timestamps break runs"
+    normal_false_alarm_event: "maximal contiguous run of normal_alarm_t == True"
+    events_per_hour: "normal_false_alarm_runs / normal_scored_exposure_hours"
+    alarm_seconds_per_hour: "FP_alarm_samples / normal_scored_exposure_hours"
+    point_fpr: "FP_normal_samples / total_normal_scored_samples"
+    reporting_note: "Reported separately from event-level unmatched alarms; strictly reflects operational false-alarm burden during normal periods"
+
+multiseed_policy:
+  seeds: [42, 43, 44]
+  canonical_seed: 42
+  reporting: "Mean +/- standard deviation across seeds 42, 43, 44"
+  selection_constraint: "Strictly prohibited from cherry-picking best seed on test"
+
+outputs:
+  metrics_dir: "results/metrics"
+  figures_dir: "results/figures/final_test"
+  expected_files:
+    test_summary_csv: "results/metrics/final_test_summary.csv"
+    multiseed_summary_csv: "results/metrics/final_test_multiseed.csv"
+    attack_events_csv: "results/metrics/final_attack_events.csv"
+    alarm_events_csv: "results/metrics/final_alarm_events.csv"
+    detection_delays_csv: "results/metrics/final_detection_delays.csv"
+    per_file_csv: "results/metrics/final_per_file.csv"
