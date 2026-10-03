@@ -1,0 +1,11 @@
+attack_event_id,session,duration_seconds,process_set,max_gru_score_inside,frozen_threshold,score_to_threshold_ratio,ridge_detected,persistence_detected,nearest_alarm_before_sec,nearest_alarm_after_sec,factual_telemetry_observation
+test2_atk_05,test2,123,P1,0.821734,1.058582,0.7763,True,False,2092.0,2319.0,Ridge barely crossed threshold (1.4438 vs 1.4009) at t=12s; GRU max score remained at 0.8217 (77.6% of threshold).
+test2_atk_06,test2,256,P1,0.884771,1.058582,0.8358,False,False,711.0,2711.0,Missed by all models. Residual remained low across all features; max GRU score 0.8848 (83.6% of threshold).
+test2_atk_09,test2,199,P1,1.04811,1.058582,0.9901,False,False,481.0,122.0,"Near miss: max GRU score reached 1.0481 (99.0% of threshold), falling short of alarm by only 0.0105 RMSE."
+test2_atk_10,test2,421,P1,0.731651,1.058582,0.6912,True,False,4560.0,1173.0,Ridge triggered alarm at t=187s (peak 1.4601 vs 1.4009); GRU score stayed low at 0.7317 (69.1% of threshold).
+test2_atk_14,test2,152,P1,0.786471,1.058582,0.7429,False,False,861.0,2639.0,Missed by all models. Peak GRU score 0.7865 (74.3% of threshold); no actuator/sensor excursion exceeded normal variance.
+test2_atk_16,test2,65,P1,0.716704,1.058582,0.677,True,False,995.0,290.0,Ridge detected at t=13s (peak 1.4604 vs 1.4009); GRU peak score 0.7167 (67.7% of threshold).
+test2_atk_19,test2,119,P3,0.655903,1.058582,0.6196,False,False,2484.0,709.0,"Missed by Persistence, Ridge, and GRU seed42/43; detected by GRU seed44 (at t=101s). GRU seed42 peak 0.6559 (62.0% threshold)."
+test2_atk_20,test2,119,P3,0.868458,1.058582,0.8204,False,False,343.0,448.0,Missed by all models and all seeds. P3 boiler disturbance; GRU seed42 peak 0.8685 (82.0% of threshold).
+test3_atk_01,test3,132,P1,0.977199,1.058582,0.9231,False,False,12.0,32.0,"Missed by all models. High background score, peak 0.9772 (92.3% of threshold), adjacent to normal false alarms 12s before and 32s after."
+test5_atk_09,test5,241,P1,1.019327,1.058582,0.9629,True,False,1160.0,3660.0,Near miss: GRU peak score reached 1.0193 (96.3% of threshold). Ridge detected at t=10s (peak 1.4529 vs 1.4009).

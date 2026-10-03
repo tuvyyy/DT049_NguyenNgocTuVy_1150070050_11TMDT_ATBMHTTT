@@ -1,0 +1,41 @@
+model_id,model_name,process_group,evaluable_attacks,detected_count,missed_count,recall
+persistence,Baseline 0: Persistence,P1 (all involving),34,11,23,0.3235
+persistence,Baseline 0: Persistence,P2 (all involving),22,16,6,0.7273
+persistence,Baseline 0: Persistence,P3 (all involving),8,5,3,0.625
+persistence,Baseline 0: Persistence,Multi-process (>1 process),14,10,4,0.7143
+persistence,Baseline 0: Persistence,P1 only,23,4,19,0.1739
+persistence,Baseline 0: Persistence,P2 only,11,8,3,0.7273
+persistence,Baseline 0: Persistence,P3 only,2,0,2,0.0
+persistence,Baseline 0: Persistence,All attacks,50,22,28,0.44
+ridge,Baseline 1: Ridge (alpha=300),P1 (all involving),34,21,13,0.6176
+ridge,Baseline 1: Ridge (alpha=300),P2 (all involving),22,22,0,1.0
+ridge,Baseline 1: Ridge (alpha=300),P3 (all involving),8,5,3,0.625
+ridge,Baseline 1: Ridge (alpha=300),Multi-process (>1 process),14,13,1,0.9286
+ridge,Baseline 1: Ridge (alpha=300),P1 only,23,11,12,0.4783
+ridge,Baseline 1: Ridge (alpha=300),P2 only,11,11,0,1.0
+ridge,Baseline 1: Ridge (alpha=300),P3 only,2,0,2,0.0
+ridge,Baseline 1: Ridge (alpha=300),All attacks,50,35,15,0.7
+gru_seed42,"Primary GRU (Seed 42, Canonical)",P1 (all involving),34,26,8,0.7647
+gru_seed42,"Primary GRU (Seed 42, Canonical)",P2 (all involving),22,22,0,1.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",P3 (all involving),8,6,2,0.75
+gru_seed42,"Primary GRU (Seed 42, Canonical)",Multi-process (>1 process),14,14,0,1.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",P1 only,23,15,8,0.6522
+gru_seed42,"Primary GRU (Seed 42, Canonical)",P2 only,11,11,0,1.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",P3 only,2,0,2,0.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",All attacks,50,40,10,0.8
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",P1 (all involving),34,25,9,0.7353
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",P2 (all involving),22,22,0,1.0
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",P3 (all involving),8,6,2,0.75
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",Multi-process (>1 process),14,14,0,1.0
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",P1 only,23,14,9,0.6087
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",P2 only,11,11,0,1.0
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",P3 only,2,0,2,0.0
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",All attacks,50,39,11,0.78
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",P1 (all involving),34,26,8,0.7647
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",P2 (all involving),22,22,0,1.0
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",P3 (all involving),8,7,1,0.875
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",Multi-process (>1 process),14,14,0,1.0
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",P1 only,23,15,8,0.6522
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",P2 only,11,11,0,1.0
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",P3 only,2,1,1,0.5
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",All attacks,50,41,9,0.82

@@ -1,0 +1,16 @@
+model_id,model_name,operating_point,threshold_value,is_primary,tp_detected,fn_missed,event_level_fp,event_precision,event_recall,event_f1,normal_fa_events_per_hour,fp_alarm_seconds_per_hour,point_fpr,median_detection_delay_sec
+persistence,Baseline 0: Persistence,Q99.5,1.293395,False,37,13,1293,0.02782,0.74,0.053623,11.0682,18.893,0.00524805,41.0
+persistence,Baseline 0: Persistence,Q99.9,1.680523,True,22,28,430,0.048673,0.44,0.087649,3.7016,3.9215,0.00108931,40.5
+persistence,Baseline 0: Persistence,Q99.99,1.866531,False,17,33,64,0.209877,0.34,0.259542,0.4306,0.5681,0.0001578,30.0
+ridge,Baseline 1: Ridge (alpha=300),Q99.5,0.851713,False,50,0,1948,0.025025,1.0,0.048828,17.0513,19.3053,0.00536258,18.0
+ridge,Baseline 1: Ridge (alpha=300),Q99.9,1.400928,True,35,15,515,0.063636,0.7,0.116667,4.4804,6.5237,0.00181213,13.0
+ridge,Baseline 1: Ridge (alpha=300),Q99.99,1.484236,False,29,21,112,0.205674,0.58,0.303665,0.8338,2.8678,0.00079662,13.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",Q99.5,0.695715,False,49,1,1772,0.026908,0.98,0.052378,14.8707,19.6809,0.00546693,15.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",Q99.9,1.058582,True,40,10,335,0.106667,0.8,0.188235,2.822,5.8915,0.00163652,22.0
+gru_seed42,"Primary GRU (Seed 42, Canonical)",Q99.99,1.376288,False,36,14,54,0.4,0.72,0.514286,0.339,2.9686,0.00082462,24.5
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",Q99.5,0.803722,False,49,1,1813,0.026316,0.98,0.051255,15.7594,19.5985,0.00544402,17.0
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",Q99.9,1.195869,True,39,11,317,0.109551,0.78,0.192118,2.7212,5.5433,0.0015398,21.0
+gru_seed43,"Primary GRU (Seed 43, Replicate 1)",Q99.99,1.359241,False,36,14,54,0.4,0.72,0.514286,0.3573,2.9686,0.00082462,24.5
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",Q99.5,0.713679,False,49,1,1759,0.027102,0.98,0.052745,15.0173,19.8184,0.00550511,17.0
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",Q99.9,1.076832,True,41,9,275,0.129747,0.82,0.224044,2.2906,5.3142,0.00147617,24.0
+gru_seed44,"Primary GRU (Seed 44, Replicate 2)",Q99.99,1.366715,False,36,14,57,0.387097,0.72,0.503497,0.3573,2.9411,0.00081699,25.5
