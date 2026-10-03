@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "baseline_model": "one_step_ridge",
+    "version": "1.0.0",
+    "timestamp_utc": "2026-10-02T16:50:06.192984+00:00",
+    "python_version": "3.14.7 (main, Sep  5 2026, 05:55:41) [GCC 16.2.0]",
+    "sklearn_version": "1.9.1",
+    "numpy_version": "2.5.3",
+    "hai_commit_reference": "2a814cebc9a66b06c9e5cd545e2d72e65d383737",
+    "preprocessing_manifest": "results/audit/hai_21_03_preprocessing_manifest.csv",
+    "scaler_metadata": "models/preprocessing/scaler_metadata.json",
+    "ridge_metadata": "models/baselines/ridge_metadata.json",
+    "primary_operating_threshold": "Q99.9",
+    "primary_threshold_value": 1.4009277820587158,
+    "selected_alpha": 300.0,
+    "feature_count": 79,
+    "zero_variance_features_count": 22,
+    "zero_variance_handling": "scaler scale=1.0, learned Ridge weights identically zero"
+  },
+  "scored_exposure": {
+    "development_training_samples": 442800,
+    "development_training_exposure_seconds": 442800,
+    "development_training_exposure_hours": 123.0,
+    "normal_validation_samples": 478800,
+    "normal_validation_exposure_seconds": 478800,
+    "normal_validation_exposure_hours": 133.0,
+    "validation_first_scored_timestamp": "2020-08-04T22:00:01",
+    "validation_last_scored_timestamp": "2020-08-10T11:00:00"
+  },
+  "score_distributions": {
+    "development_training_rmse": {
+      "count": 442800,
+      "min": 0.03679513558745384,
+      "max": 2.6971476078033447,
+      "mean": 0.23135404858415123,
+      "std": 0.10497029276280218,
+      "median": 0.2174406498670578,
+      "q25": 0.17382332682609558,
+      "q75": 0.2676352262496948,
+      "q95": 0.36356914043426514,
+      "q99": 0.5980741381645203,
+      "q99_5": 0.8105494976043701,
+      "q99_9": 1.4034086465835571,
+      "q99_99": 1.4883520603179932
+    },
+    "normal_validation_rmse": {
+      "count": 478800,
+      "min": 0.03685148432850838,
+      "max": 3.6375153064727783,
+      "mean": 0.2456821626860885,
+      "std": 0.10699867052690036,
+      "median": 0.2322571575641632,
+      "q25": 0.18722067773342133,
+      "q75": 0.2830001413822174,
+      "q95": 0.3777162730693817,
+      "q99": 0.6219327449798584,
+      "q99_5": 0.8517133593559265,
+      "q99_9": 1.4009277820587158,
+      "q99_99": 1.4842363595962524
+    }
+  },
+  "threshold_calibration": {
+    "Q99.5": {
+      "role": "sensitivity_lower",
+      "quantile": 0.995,
+      "threshold": 0.8517133593559265,
+      "point_exceedance_count": 2394,
+      "point_exceedance_rate": 0.005,
+      "alarm_seconds": 2394,
+      "alarm_seconds_per_hour": 18.0,
+      "false_alarm_events_count": 2379,
+      "false_alarm_events_per_hour": 17.8872,
+      "mean_event_duration_seconds": 1.01,
+      "median_event_duration_seconds": 1.0,
+      "max_event_duration_seconds": 3,
+      "validation": {
+        "point_exceedance_count": 2394,
+        "point_exceedance_rate": 0.005,
+        "alarm_seconds_per_hour": 18.0,
+        "false_alarm_events_count": 2379,
+        "false_alarm_events_per_hour": 17.8872,
+        "mean_duration_seconds": 1.01,
+        "median_duration_seconds": 1.0,
+        "max_duration_seconds": 3
+      },
+      "development_training": {
+        "point_exceedance_count": 2009,
+        "point_exceedance_rate": 0.004537037037037037,
+        "alarm_seconds_per_hour": 16.3333,
+        "false_alarm_events_count": 2000,
+        "false_alarm_events_per_hour": 16.2602,
+        "mean_duration_seconds": 1.0,
+        "median_duration_seconds": 1.0,
+        "max_duration_seconds": 4
+      }
+    },
+    "Q99.9": {
+      "role": "primary_operating_point",
+      "quantile": 0.999,
+      "threshold": 1.4009277820587158,
+      "point_exceedance_count": 479,
+      "point_exceedance_rate": 0.0010004177109440267,
+      "alarm_seconds": 479,
+      "alarm_seconds_per_hour": 3.6015,
+      "false_alarm_events_count": 475,
+      "false_alarm_events_per_hour": 3.5714,
+      "mean_event_duration_seconds": 1.01,
+      "median_event_duration_seconds": 1.0,
+      "max_event_duration_seconds": 3,
+      "validation": {
+        "point_exceedance_count": 479,
+        "point_exceedance_rate": 0.0010004177109440267,
+        "alarm_seconds_per_hour": 3.6015,
+        "false_alarm_events_count": 475,
+        "false_alarm_events_per_hour": 3.5714,
+        "mean_duration_seconds": 1.01,
+        "median_duration_seconds": 1.0,
+        "max_duration_seconds": 3
+      },
+      "development_training": {
+        "point_exceedance_count": 462,
+        "point_exceedance_rate": 0.0010433604336043362,
+        "alarm_seconds_per_hour": 3.7561,
+        "false_alarm_events_count": 458,
+        "false_alarm_events_per_hour": 3.7236,
+        "mean_duration_seconds": 1.01,
+        "median_duration_seconds": 1.0,
+        "max_duration_seconds": 3
+      }
+    },
+    "Q99.99": {
+      "role": "sensitivity_upper",
+      "quantile": 0.9999,
+      "threshold": 1.4842363595962524,
+      "point_exceedance_count": 48,
+      "point_exceedance_rate": 0.00010025062656641604,
+      "alarm_seconds": 48,
+      "alarm_seconds_per_hour": 0.3609,
+      "false_alarm_events_count": 45,
+      "false_alarm_events_per_hour": 0.3383,
+      "mean_event_duration_seconds": 1.07,
+      "median_event_duration_seconds": 1.0,
+      "max_event_duration_seconds": 2,
+      "validation": {
+        "point_exceedance_count": 48,
+        "point_exceedance_rate": 0.00010025062656641604,
+        "alarm_seconds_per_hour": 0.3609,
+        "false_alarm_events_count": 45,
+        "false_alarm_events_per_hour": 0.3383,
+        "mean_duration_seconds": 1.07,
+        "median_duration_seconds": 1.0,
+        "max_duration_seconds": 2
+      },
+      "development_training": {
+        "point_exceedance_count": 51,
+        "point_exceedance_rate": 0.00011517615176151762,
+        "alarm_seconds_per_hour": 0.4146,
+        "false_alarm_events_count": 47,
+        "false_alarm_events_per_hour": 0.3821,
+        "mean_duration_seconds": 1.09,
+        "median_duration_seconds": 1.0,
+        "max_duration_seconds": 3
+      }
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "model_name": "one_step_gru",
+  "version": "1.0.0",
+  "timestamp_utc": "2026-10-03T07:38:50.253574+00:00",
+  "python_version": "3.14.7 (main, Sep  5 2026, 05:55:41) [GCC 16.2.0]",
+  "pytorch_version": "2.14.0+cpu",
+  "cuda_version": null,
+  "cuda_available": false,
+  "hai_commit_reference": "2a814cebc9a66b06c9e5cd545e2d72e65d383737",
+  "architecture": {
+    "input_size": 79,
+    "hidden_size": 64,
+    "num_layers": 1,
+    "dropout": 0.0,
+    "output_size": 79,
+    "trainable_parameters": 32975
+  },
+  "training_hyperparameters": {
+    "loss": "MSE",
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "gradient_clipping_max_norm": 1.0,
+    "batch_size": 256,
+    "num_workers": 0,
+    "maximum_epochs": 50,
+    "early_stopping_patience": 5,
+    "early_stopping_min_delta": 1e-05
+  },
+  "window_selection": {
+    "candidate_windows": [
+      10,
+      30,
+      60
+    ],
+    "stage_a_seed": 42,
+    "selected_window": 30,
+    "selection_metric": "lowest_validation_mean_rmse_stride5",
+    "stage_a_results": [
+      {
+        "window": 10,
+        "best_epoch": 25,
+        "stop_epoch": 30,
+        "stop_reason": "early_stopping",
+        "val_mean_rmse_s5": 0.22637873596816846
+      },
+      {
+        "window": 30,
+        "best_epoch": 27,
+        "stop_epoch": 32,
+        "stop_reason": "early_stopping",
+        "val_mean_rmse_s5": 0.22597168349960933
+      },
+      {
+        "window": 60,
+        "best_epoch": 13,
+        "stop_epoch": 18,
+        "stop_reason": "early_stopping",
+        "val_mean_rmse_s5": 0.22942426378526462
+      }
+    ],
+    "selection_margins": {
+      "W=10 - W=30": 0.00040705,
+      "W=60 - W=30": 0.00345258
+    }
+  },
+  "multiseed_stability": {
+    "final_seeds": [
+      42,
+      43,
+      44
+    ],
+    "mean_rmse_across_seeds": 0.2274,
+    "std_rmse_across_seeds": 0.001578,
+    "mean_q999_threshold": 1.110428,
+    "std_q999_threshold": 0.060874,
+    "mean_q999_events_per_hour": 3.5566,
+    "std_q999_events_per_hour": 0.0061,
+    "runs": [
+      {
+        "window_size": 30,
+        "seed": 42,
+        "selected_epoch": 27,
+        "stop_epoch": 32,
+        "stop_reason": "early_stopping",
+        "total_epochs": 32,
+        "val_mean_rmse_stride1": 0.22561317,
+        "val_median_rmse": 0.214421,
+        "val_std_rmse": 0.090822,
+        "val_q99_rmse": 0.524117,
+        "q99_5_threshold": 0.695715,
+        "q99_9_threshold": 1.058582,
+        "q99_99_threshold": 1.376288,
+        "q99_9_alarm_sec_per_h": 3.6017,
+        "q99_9_events_count": 474,
+        "q99_9_events_per_hour": 3.5641,
+        "q99_9_mean_duration_sec": 1.01,
+        "q99_9_max_duration_sec": 2,
+        "full_eval_duration_sec": 22.91,
+        "run_total_duration_sec": 533.4
+      },
+      {
+        "window_size": 30,
+        "seed": 43,
+        "selected_epoch": 17,
+        "stop_epoch": 22,
+        "stop_reason": "early_stopping",
+        "total_epochs": 22,
+        "val_mean_rmse_stride1": 0.22945071,
+        "val_median_rmse": 0.217115,
+        "val_std_rmse": 0.097821,
+        "val_q99_rmse": 0.567546,
+        "q99_5_threshold": 0.803722,
+        "q99_9_threshold": 1.195869,
+        "q99_99_threshold": 1.359241,
+        "q99_9_alarm_sec_per_h": 3.6017,
+        "q99_9_events_count": 473,
+        "q99_9_events_per_hour": 3.5566,
+        "q99_9_mean_duration_sec": 1.01,
+        "q99_9_max_duration_sec": 4,
+        "full_eval_duration_sec": 22.13,
+        "run_total_duration_sec": 583.69
+      },
+      {
+        "window_size": 30,
+        "seed": 44,
+        "selected_epoch": 29,
+        "stop_epoch": 34,
+        "stop_reason": "early_stopping",
+        "total_epochs": 34,
+        "val_mean_rmse_stride1": 0.22713761,
+        "val_median_rmse": 0.215848,
+        "val_std_rmse": 0.091525,
+        "val_q99_rmse": 0.537123,
+        "q99_5_threshold": 0.713679,
+        "q99_9_threshold": 1.076832,
+        "q99_99_threshold": 1.366715,
+        "q99_9_alarm_sec_per_h": 3.6017,
+        "q99_9_events_count": 472,
+        "q99_9_events_per_hour": 3.5491,
+        "q99_9_mean_duration_sec": 1.01,
+        "q99_9_max_duration_sec": 4,
+        "full_eval_duration_sec": 27.16,
+        "run_total_duration_sec": 781.02
+      }
+    ]
+  },
+  "checkpoint_sha256": {
+    "gru_w10_seed42.pt": "507c5f33575c094a39e6fa4dd1c758fe5314f52b0caaa7d42493ca6d6601b501",
+    "gru_w30_seed42.pt": "48013cdb36a7490330ba615874399ff21f0a2c3f9b5f7f6edc756168233e2c3d",
+    "gru_w60_seed42.pt": "464ced4dd45d15e6dc3c294efcbce44cd2ded3d906d5da6929b7b66127fa2b79",
+    "gru_w30_seed43.pt": "ac4bfb705c5dd28e114d32b7a9bc654dc2acc7875180f86f06c7661780d7c75c",
+    "gru_w30_seed44.pt": "34443577a9a3a91f2dbeddbb35481c9e1610f3e8d0f40fb360a67af960e3c660"
+  },
+  "validation_reuse_limitation": "train3 is reused for early stopping, window-size selection, and final normal threshold calibration. This is not test leakage because the official attack test remains sealed, but repeated use of one normal-validation campaign may introduce some validation-selection bias."
+}

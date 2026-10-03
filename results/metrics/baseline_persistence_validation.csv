@@ -1,0 +1,4 @@
+target_name,role,quantile,threshold,val_point_exceedance_count,val_point_exceedance_rate,val_alarm_seconds,val_alarm_seconds_per_hour,val_false_alarm_events_count,val_false_alarm_events_per_hour,val_mean_duration_seconds,val_median_duration_seconds,val_max_duration_seconds,train_point_exceedance_count,train_point_exceedance_rate,train_alarm_seconds,train_alarm_seconds_per_hour,train_false_alarm_events_count,train_false_alarm_events_per_hour,train_mean_duration_seconds,train_median_duration_seconds,train_max_duration_seconds
+Q99.5,sensitivity_lower,0.995,1.293395,2394,0.005,2394,18.0,1454,10.9323,1.65,2.0,3,2122,0.00479223,2122,17.252,1279,10.3984,1.66,2.0,5
+Q99.9,primary_operating_point,0.999,1.680523,479,0.00100042,479,3.6015,471,3.5414,1.02,1.0,3,431,0.00097335,431,3.5041,425,3.4553,1.01,1.0,3
+Q99.99,sensitivity_upper,0.9999,1.866531,48,0.00010025,48,0.3609,41,0.3083,1.17,1.0,3,40,9.033e-05,40,0.3252,38,0.3089,1.05,1.0,2

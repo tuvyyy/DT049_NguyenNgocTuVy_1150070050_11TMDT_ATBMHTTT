@@ -1,0 +1,7 @@
+processed_file,source_file,shape,dtype,byte_size,sha256,scaler_metadata_ref
+data/processed/hai_21_03/train1_features.npy,train1.csv.gz,"(216001, 79)",float32,68256444,2e6f11e0b0324745aa2c75cbd6bffa340e12378c94bb9b6b2caa18a58f36a860,models/preprocessing/scaler_metadata.json
+data/processed/hai_21_03/train1_timestamps.npy,train1.csv.gz,"(216001,)",datetime64[s],1728136,2c8593fc7e595b3a18215f9395c046af8c263807304691eadba2d9b37e45e60e,models/preprocessing/scaler_metadata.json
+data/processed/hai_21_03/train2_features.npy,train2.csv.gz,"(226801, 79)",float32,71669244,2f80b24c63bd268d61d177d471bce5b61330913dd323a27936a93db830d8050b,models/preprocessing/scaler_metadata.json
+data/processed/hai_21_03/train2_timestamps.npy,train2.csv.gz,"(226801,)",datetime64[s],1814536,4742a602ca117fb7e134c390483fd6a2f661e07f28e9567f476099425244284c,models/preprocessing/scaler_metadata.json
+data/processed/hai_21_03/train3_features.npy,train3.csv.gz,"(478801, 79)",float32,151301244,266c634e358708b716047c5113a53d548c13dde691951562390888b7081a48f4,models/preprocessing/scaler_metadata.json
+data/processed/hai_21_03/train3_timestamps.npy,train3.csv.gz,"(478801,)",datetime64[s],3830536,0084ca3e3255eea51b0e289e6197c8c15435667bcbf12c797d7390edaf72f2a1,models/preprocessing/scaler_metadata.json

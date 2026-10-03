@@ -1,0 +1,56 @@
+# Preprocessing & Windowing Configuration for DT049 (HAI 21.03)
+version: "1.0.0"
+dataset:
+  name: "HAI Security Dataset"
+  version: "21.03"
+  source_dir: "data/source/hai_repo/hai-21.03"
+  processed_dir: "data/processed/hai_21_03"
+  model_dir: "models/preprocessing"
+
+features:
+  total_candidate_count: 79
+  excluded_columns:
+    - "time"
+    - "attack"
+    - "attack_P1"
+    - "attack_P2"
+    - "attack_P3"
+  feature_dtype: "float32"
+  timestamp_dtype: "datetime64[s]"
+
+splits:
+  development_training:
+    files:
+      - "train1.csv.gz"
+      - "train2.csv.gz"
+    expected_rows: 442802
+    role: "Scaler fitting via streaming partial_fit and model training only"
+  normal_validation:
+    files:
+      - "train3.csv.gz"
+    expected_rows: 478801
+    role: "Validation loss, drift evaluation, and false-alarm calibration (frozen scaler only)"
+  official_final_test:
+    files:
+      - "test1.csv.gz"
+      - "test2.csv.gz"
+      - "test3.csv.gz"
+      - "test4.csv.gz"
+      - "test5.csv.gz"
+    role: "Sealed benchmark evaluation (untouched during development)"
+
+scaling:
+  method: "StandardScaler"
+  zero_variance_scale_handling: 1.0
+  fit_chunk_size: 100000
+
+windowing:
+  prediction_task: "sequence-to-next-step"
+  input_slice: "t-W+1:t+1"
+  target_slice: "t+1"
+  stride: 1
+  candidate_window_sizes:
+    - 10
+    - 30
+    - 60
+  boundary_policy: "strict_file_boundary_isolation"

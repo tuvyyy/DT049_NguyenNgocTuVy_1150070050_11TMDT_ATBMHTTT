@@ -1,0 +1,4 @@
+window_size,seed,selected_epoch,stop_epoch,stop_reason,total_epochs,val_mean_rmse_stride1,val_median_rmse,val_std_rmse,val_q99_rmse,q99_5_threshold,q99_9_threshold,q99_99_threshold,q99_9_alarm_sec_per_h,q99_9_events_count,q99_9_events_per_hour,q99_9_mean_duration_sec,q99_9_max_duration_sec,full_eval_duration_sec,run_total_duration_sec
+30,42,27,32,early_stopping,32,0.22561317,0.214421,0.090822,0.524117,0.695715,1.058582,1.376288,3.6017,474,3.5641,1.01,2,22.91,533.4
+30,43,17,22,early_stopping,22,0.22945071,0.217115,0.097821,0.567546,0.803722,1.195869,1.359241,3.6017,473,3.5566,1.01,4,22.13,583.69
+30,44,29,34,early_stopping,34,0.22713761,0.215848,0.091525,0.537123,0.713679,1.076832,1.366715,3.6017,472,3.5491,1.01,4,27.16,781.02

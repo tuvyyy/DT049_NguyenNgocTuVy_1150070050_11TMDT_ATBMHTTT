@@ -1,0 +1,86 @@
+# Primary Model: One-Step Multivariate GRU Predictor Configuration for DT049
+version: "1.0.0"
+
+environment:
+  python_version: "3.14.7"
+  pytorch_version: "2.14.0+cpu"
+  cuda_version: null
+  cuda_available: false
+  device: "cpu"
+  num_threads: 4
+  num_interop_threads: 1
+
+model:
+  name: "one_step_gru"
+  description: "Compact 1-layer multivariate GRU one-step predictor: X_hat[t+1] = Linear(GRU(X[t-W+1 : t+1]))"
+  input_size: 79
+  hidden_size: 64
+  num_layers: 1
+  dropout: 0.0
+  output_size: 79
+  trainable_parameters: 32975
+
+data:
+  development_training:
+    sessions:
+      - name: "train1"
+        features: "data/processed/hai_21_03/train1_features.npy"
+        timestamps: "data/processed/hai_21_03/train1_timestamps.npy"
+        rows: 216001
+      - name: "train2"
+        features: "data/processed/hai_21_03/train2_features.npy"
+        timestamps: "data/processed/hai_21_03/train2_timestamps.npy"
+        rows: 226801
+    stride: 5
+  normal_validation:
+    session:
+      name: "train3"
+      features: "data/processed/hai_21_03/train3_features.npy"
+      timestamps: "data/processed/hai_21_03/train3_timestamps.npy"
+      rows: 478801
+    selection_stride: 5
+    final_evaluation_stride: 1
+
+training:
+  loss: "MSE"
+  optimizer: "Adam"
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-5
+  gradient_clipping_max_norm: 1.0
+  batch_size: 256
+  num_workers: 0
+  maximum_epochs: 50
+  early_stopping_patience: 5
+  early_stopping_min_delta: 1.0e-5
+
+window_selection:
+  candidate_windows:
+    - 10
+    - 30
+    - 60
+  stage_a_seed: 42
+  criterion: "lowest_validation_mean_rmse"
+
+multiseed_stability:
+  final_seeds:
+    - 42
+    - 43
+    - 44
+
+threshold_calibration:
+  source: "train3 (normal validation only, stride=1)"
+  method: "empirical_quantile"
+  numpy_quantile_method: "linear"
+  primary_operating_point: "Q99.9"
+  operating_targets:
+    - name: "Q99.5"
+      quantile: 0.995
+      role: "sensitivity_lower"
+    - name: "Q99.9"
+      quantile: 0.999
+      role: "primary_operating_point"
+    - name: "Q99.99"
+      quantile: 0.9999
+      role: "sensitivity_upper"
+  alarm_rule: "score_t > threshold"
+  event_definition: "contiguous run of score_t > threshold with zero smoothing, merging, or filtering"

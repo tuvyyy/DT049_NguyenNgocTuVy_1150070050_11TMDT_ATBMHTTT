@@ -1,0 +1,4 @@
+window_size,seed,best_epoch,total_epochs,val_mean_rmse_s5,run_duration_seconds,train_time_total_seconds,val_time_total_seconds
+10,42,25,30,0.22637873596816846,206.37,143.53,62.77
+30,42,27,30,0.22597168349960933,488.92,352.12,136.74
+60,42,13,18,0.22942426378526462,468.0,342.2,125.74

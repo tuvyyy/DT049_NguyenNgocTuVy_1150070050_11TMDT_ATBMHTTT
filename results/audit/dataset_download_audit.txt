@@ -1,0 +1,18 @@
+Dataset: HAI Security Dataset
+Selected Version: HAI 21.03
+Source URL: https://github.com/icsdataset/hai
+Default Branch: master
+Commit Hash: 2a814cebc9a66b06c9e5cd545e2d72e65d383737
+Download Timestamp (UTC): 2026-10-02T11:42:07Z
+Local Storage Path: data/source/hai_repo/hai-21.03
+Actual Checkout Disk Usage: 179M
+
+Files Downloaded:
+data/source/hai_repo/hai-21.03/test1.csv.gz	6149549 bytes
+data/source/hai_repo/hai-21.03/test2.csv.gz	16765328 bytes
+data/source/hai_repo/hai-21.03/test3.csv.gz	15477098 bytes
+data/source/hai_repo/hai-21.03/test4.csv.gz	5602841 bytes
+data/source/hai_repo/hai-21.03/test5.csv.gz	13199829 bytes
+data/source/hai_repo/hai-21.03/train1.csv.gz	30651421 bytes
+data/source/hai_repo/hai-21.03/train2.csv.gz	31430645 bytes
+data/source/hai_repo/hai-21.03/train3.csv.gz	67961579 bytes

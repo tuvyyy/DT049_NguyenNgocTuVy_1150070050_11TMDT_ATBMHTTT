@@ -9,7 +9,16 @@ data/raw/
 data/processed/
 
 # Model/checkpoint có thể rất lớn
-models/
+models/*
+!models/preprocessing/
+!models/baselines/
+models/baselines/*
+!models/baselines/ridge.joblib
+!models/baselines/ridge_metadata.json
+!models/primary/
+models/primary/*
+!models/primary/*.pt
+!models/primary/gru_metadata.json
 
 # File tạm
 results/logs/

@@ -1,0 +1,4 @@
+window_size,seed,best_epoch,stop_epoch,stop_reason,total_epochs,val_mean_rmse_s5,run_duration_seconds,train_time_total_seconds,val_time_total_seconds
+10,42,25,30,early_stopping,30,0.22637873596816846,243.79,176.81,66.85
+30,42,27,32,early_stopping,32,0.22597168349960933,533.4,396.76,136.57
+60,42,13,18,early_stopping,18,0.22942426378526462,884.75,674.61,210.07
