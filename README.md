@@ -6,25 +6,33 @@ Phát hiện bất thường chuỗi thời gian đa biến (Multivariate Time-S
 
 ## 1. Tổng Quan Dự Án (Project Overview)
 
-DT049 là đồ án nghiên cứu thực nghiệm môn học, thực hiện nghiên cứu tái lập có chọn lọc (selective replication) lấy cảm hứng từ phương pháp luận của bài báo khoa học năm 2025 trên tạp chí *Computers & Security*, được thích ứng và triển khai trên bộ dữ liệu hệ thống điều khiển công nghiệp (ICS) công khai **HAI 21.03**.
+DT049 là đồ án nghiên cứu thực nghiệm môn học, thực hiện nghiên cứu tái lập có chọn lọc và điều chỉnh (selective and adapted reproduction) lấy cảm hứng từ kiến trúc mạng nơ-ron của bài báo khoa học năm 2025 trên tạp chí *Computers & Security*, được thích ứng và triển khai trên bộ dữ liệu hệ thống điều khiển công nghiệp (ICS) công khai **HAI 21.03**:
 
-Dự án thiết lập một khung thực nghiệm kiểm soát chặt chẽ rò rỉ dữ liệu (leakage-controlled experimental framework) để phát hiện bất thường đa biến trên 79 kênh tín hiệu cảm biến và cơ cấu chấp hành (telemetry channels). Dự án đánh giá và so sánh ba họ mô hình:
-1. **Baseline 0 (Persistence):** Mô hình dự đoán quán tính giữ nguyên trạng thái một bước ($\hat{\mathbf{x}}_t = \mathbf{x}_{t-1}$).
-2. **Baseline 1 (Ridge Regression):** Mô hình dự đoán tuyến tính đa đầu ra có điều chuẩn L2 ($\alpha = 300.0$).
-3. **Mô Hình Chính — Primary Model (GRU):** Mạng nơ-ron hồi quy Gated Recurrent Unit 1 tầng gọn nhẹ ($W=30$, Hidden=64).
+* **Bài báo tham chiếu gốc:** Karel Kuchař & Radek Fujdiak (2025), *"Analyzing anomalies in industrial networks: A data-driven approach to enhance security in manufacturing processes"*, *Computers & Security*, Vol. 153, 104395. DOI: [`10.1016/j.cose.2025.104395`](https://doi.org/10.1016/j.cose.2025.104395) (Open Access).
+* **Bộ dữ liệu thực nghiệm:** **HAI Security Dataset 21.03** (công bố bởi ETRI Hàn Quốc, gồm 79 kênh tín hiệu cảm biến và cơ cấu chấp hành ở tần số lấy mẫu 1 Hz).
 
-Quá trình đánh giá tập trung vào các thước đo vận hành thực tế trong công nghiệp: Precision, Recall và F1 ở cấp độ sự kiện tấn công liên tục (contiguous attack event-level), tần suất báo động giả trong quá trình vận hành bình thường kéo dài, và độ trễ phát hiện thực nghiệm (detection delay).
+Dự án thiết lập một khung thực nghiệm kiểm soát chặt chẽ rò rỉ dữ liệu (leakage-controlled experimental framework) với hai nhánh thực nghiệm có ranh giới rõ ràng:
+1. **Thực nghiệm V1 (Dự Báo Chuỗi Thời Gian Không Giám Sát — Unsupervised Time-Series Forecasting):**
+   - **Baseline 0 (Persistence):** Mô hình quán tính giữ nguyên trạng thái một bước ($\hat{\mathbf{x}}_t = \mathbf{x}_{t-1}$).
+   - **Baseline 1 (Ridge Regression):** Bộ dự đoán tuyến tính đa đầu ra có điều chuẩn L2 ($\alpha = 300.0$).
+   - **Mô Hình Chính — Primary Model (GRU):** Mạng nơ-ron hồi quy Gated Recurrent Unit 1 tầng gọn nhẹ ($W=30$, Hidden=64, $32.975$ tham số).
+   - Huấn luyện hoàn toàn trên dữ liệu bình thường (`train1 + train2`, $0$ cuộc tấn công), hiệu chuẩn ngưỡng $Q_{99,9}$ trên `train3` normal, và đánh giá trên toàn bộ 50 cuộc tấn công của `test1`–`test5`.
+2. **Thực nghiệm V2 (Tái Lập Kiến Trúc Có Điều Chỉnh — Selective Adapted DNN Reproduction):**
+   - **Feedforward DNN V2:** Mạng truyền thẳng 6 tầng ẩn Dense `[100, 70, 100, 80, 60, 10]` với chuỗi kích hoạt `ReLU/Tanh` và 2 lớp `Dropout(0.3)` xác minh trực tiếp từ **Section 5.5 / Listing 1** của bài báo Kuchař & Fujdiak (2025), gồm **$35.731$ tham số**.
+   - Thích ứng sang bài toán phân loại nhị phân `Normal/Attack` có giám sát trên 79 kênh tín hiệu HAI 21.03 (huấn luyện trên `test1 + test2` gồm 25 cuộc tấn công, kiểm định chọn ngưỡng trên `test3` gồm 8 cuộc tấn công, và đánh giá giữ ngoài trên `test4 + test5` gồm 17 cuộc tấn công).
+
+Quá trình đánh giá tập trung vào các thước đo vận hành thực tế trong công nghiệp: Precision, Recall và F1 ở cấp độ sự kiện tấn công liên tục (contiguous attack event-level 1-to-1 matching), tần suất báo động giả trong quá trình vận hành bình thường kéo dài (`Normal FA/h`), và độ trễ phát hiện thực nghiệm (detection delay).
 
 > [!NOTE]
-> Nghiên cứu này **không** tuyên bố tái lập trực tiếp các con số kết quả của bài báo gốc. Bài báo gốc đánh giá trên một hệ thống testbed vật lý riêng biệt với động lực học quá trình, tập biến và cấu trúc tấn công khác nhau; DT049 kiểm chứng xem các kết luận về mặt kiến trúc có còn giữ vững khi được thích ứng có hệ thống sang bộ dữ liệu chuẩn HAI 21.03 dưới các quy tắc kiểm soát rò rỉ dữ liệu nghiêm ngặt hay không.
+> Nghiên cứu này **không** tuyên bố tái lập nguyên bản 100% các con số kết quả hay độ chính xác 4 lớp ($99,72\%$) của bài báo gốc. Bài báo gốc của Kuchař & Fujdiak (2025) đánh giá bài toán phân loại 4 trạng thái (`Normal`, `Security`, `Operational`, `Service`) trên một hệ thống testbed mạng công nghiệp riêng; đồng thời bài báo có sự không nhất quán nội bộ giữa phần mô tả thực nghiệm (đề cập 87 đặc trưng) và Listing 1 (khai báo cứng `input_dim = 10`). DT049 kiểm chứng cấu trúc mạng 6 tầng ẩn của Listing 1 khi được thích ứng có hệ thống sang bộ dữ liệu chuẩn HAI 21.03 (79 biến quá trình vật lý liên tục) dưới bài toán phân loại nhị phân `Normal/Attack` thì thể hiện hiệu năng như thế nào và có sự đánh đổi gì so với biến thể dự báo chuỗi thời gian không giám sát GRU.
 
 ---
 
-## 2. Câu Hỏi Nghiên Cứu Chính (Main Research Question)
+## 2. Các Câu Hỏi Nghiên Cứu Chính (Main Research Questions)
 
-> **Liệu một bộ dự đoán chuỗi thời gian gọn nhẹ như GRU có thể cải thiện khả năng phát hiện sự kiện tấn công và giảm độ trễ phát hiện so với các mô hình nền tảng đơn giản (Persistence và Ridge) trên HAI 21.03, dưới một giao thức đánh giá đóng băng không rò rỉ dữ liệu hay không?**
-
-Bên cạnh đó, với tư cách là một câu hỏi khảo sát hậu nghiệm (post-hoc), DT049 thực hiện **Nghiên cứu cắt giảm Dynamic57 (Dynamic57 Ablation)** nhằm kiểm tra xem các kênh tín hiệu có phương sai bằng 0 trong quá trình huấn luyện có đóng góp ý nghĩa vào điểm số bất thường và quyết định báo động trên tập kiểm thử chính thức hay không.
+1. **Câu hỏi nghiên cứu V1:** *Liệu một bộ dự đoán chuỗi thời gian gọn nhẹ như GRU ($W=30$) có thể cải thiện khả năng phát hiện sự kiện tấn công và giảm độ trễ phát hiện so với các mô hình nền tảng đơn giản (Persistence và Ridge) trên HAI 21.03 dưới một giao thức đánh giá đóng băng không rò rỉ dữ liệu hay không?*
+2. **Câu hỏi nghiên cứu V2 (Tái lập có điều chỉnh):** *Khi tái lập kiến trúc mạng truyền thẳng Feedforward DNN 6 tầng ẩn từ Listing 1 của Kuchař & Fujdiak (2025) và điều chỉnh sang phân loại nhị phân có giám sát trên 79 đặc trưng của HAI 21.03, mô hình đạt hiệu năng phát hiện như thế nào trên tập giữ ngoài `test4 + test5` (17 sự kiện), và sự đánh đổi về mặt vận hành (độ trễ, độ nhạy ngưỡng, báo động giả) giữa DNN có giám sát và GRU không giám sát là gì?*
+3. **Câu hỏi khảo sát hậu nghiệm (Dynamic57 Ablation):** *Các kênh tín hiệu có phương sai bằng 0 trong quá trình huấn luyện có đóng góp ý nghĩa vào điểm số bất thường và quyết định báo động trên tập kiểm thử chính thức hay không?*.
 
 ---
 
@@ -143,7 +151,10 @@ Kết quả kiểm thử chính thức đã đóng băng trên cả 5 phiên ki�
 
 ### Các Phát Hiện Khoa Học & Sự Đánh Đổi Cốt Lõi (Key Findings & Tradeoffs)
 1. **Độ Nhạy Phát Hiện (Detection Sensitivity):** GRU vượt trội rõ rệt so với các mô hình nền tảng, phát hiện thành công **$80.0\%$** các cuộc tấn công thực tế ($40/50$), so với $44.0\%$ của Persistence và $70.0\%$ của Ridge.
-2. **Giảm Thiểu Báo Động Giả (False-Alarm Mitigation):** GRU giảm tần suất các sự kiện báo động giả làm gián đoạn người vận hành xuống còn **$2.61\text{ sự kiện/giờ}$** tính trung bình trên 3 seed (giảm $29.5\%$ so với Persistence và giảm $41.7\%$ so với Ridge).
+2. **Giảm Thiểu Báo Động Giả (False-Alarm Mitigation):** GRU giảm tần suất các sự kiện báo động giả trong điều kiện vận hành bình thường kéo dài:
+   - **Tính trên trung bình 3-seed GRU ($2.6113\text{ ev/h}$):** Giảm **$29.5\%$** so với Persistence ($3.7016\text{ ev/h}$) và giảm **$41.7\%$** so với Ridge ($4.4804\text{ ev/h}$).
+   - **Tính riêng cho mô hình Canonical Seed 42 ($2.8220\text{ ev/h}$):** Giảm **$23.8\%$** so với Persistence và giảm **$37.0\%$** so với Ridge.
+   - *Bối cảnh vận hành:* Mức $2.61\text{ ev/h}$ (hay $2.82\text{ ev/h}$ của Seed 42) tương đương khoảng **$20.6$ đến $22.6$ lần cảnh báo trong một ca trực 8 giờ** của kỹ sư vận hành. Đây là bằng chứng cho thấy báo động giả vẫn là một thách thức lớn khi triển khai thực tế trên chuỗi thời gian công nghiệp dài, đòi hỏi các cơ chế quản lý cảnh báo (như hysteresis hoặc alarm persistence filter) trong các nghiên cứu mở rộng tiếp theo.
 3. **Sự Đánh Đổi Về Thời Gian Chiếm Dụng Chuông Báo (The Alarm Time Tradeoff):** Mặc dù GRU tạo ra ít sự kiện báo động giả rời rạc nhất, Persistence lại đạt tổng thời lượng chuông báo giả thấp nhất ($3.92\text{ giây/giờ}$ so với $5.89\text{ giây/giờ}$ của GRU seed 42). Nguyên nhân là sai số của Persistence lập tức quay về 0 sau 1–2 giây khi nhiễu tức thời đi qua, trong khi trạng thái ẩn của GRU cần vài giây để dao động tắt dần.
 4. **Bối Cảnh Của Event Precision:** Giá trị Event Precision khiêm tốn (~$0.11$) là đặc tính tất yếu khi đánh giá liên tục suốt 109.14 giờ ($392,908$ giây bình thường) dưới quy tắc khớp sự kiện 1-1 khắt khe mà không dùng thủ thuật gộp chuông (alarm merging) hay trễ nhân tạo (hysteresis). Con số này **không** phản ánh sự yếu kém của bộ phát hiện.
 
@@ -180,55 +191,103 @@ Bởi vì cả điểm số lẫn ngưỡng phân vị đều nhân với cùng 
 Trên tập kiểm thử chính thức, một số kênh trong 22 kênh hằng số có phát sinh dao động, do đó tính chất co giãn hằng số tuyệt đối không còn giữ nguyên. Tuy nhiên, xét về mặt thực nghiệm, đóng góp của chúng không đủ lớn để làm thay đổi bất kỳ quyết định báo động nào tại ngưỡng $Q_{99.9}$:
 > **"22 kênh không đổi lúc huấn luyện không làm thay đổi bất kỳ quyết định báo động nào của bộ phát hiện dưới phép thử hậu nghiệm Q99.9 trên HAI 21.03."**
 
-Trên toàn bộ 50 cuộc tấn công, trạng thái phát hiện nhị phân, số lượng báo động giả và độ trễ phát hiện đều giống hệt nhau giữa cấu hình 79 đặc trưng và 57 đặc trưng.
+---
+
+## 11. Thí Nghiệm V2 — Tái Lập Có Điều Chỉnh Feedforward DNN (Kuchař & Fujdiak, 2025) trên HAI 21.03
+
+Thí nghiệm V2 (`DT049_V2_SUPERVISED_DNN`) bổ sung mô hình **Feedforward DNN** làm nhánh tái lập có điều chỉnh tham chiếu bài báo gốc Kuchař & Fujdiak (2025), DOI [`10.1016/j.cose.2025.104395`](https://doi.org/10.1016/j.cose.2025.104395), và đối chiếu đối đầu với biến thể dự báo chuỗi thời gian không giám sát **GRU V1** trên cùng tập kiểm tra giữ ngoài `test4 + test5` ($t \ge 30$, 17 sự kiện tấn công).
+
+### 11.1. Kiến trúc Đã Xác minh từ Section 5.5 / Listing 1
+* **Kiến trúc mạng:** `Input(79)` $\rightarrow$ `Dense(100, relu)` $\rightarrow$ `Dense(70, tanh)` $\rightarrow$ `Dense(100, relu)` $\rightarrow$ `Dense(80, tanh)` $\rightarrow$ `Dense(60, tanh)` $\rightarrow$ `Dropout(0.3)` $\rightarrow$ `Dense(10, tanh)` $\rightarrow$ `Dropout(0.3)` $\rightarrow$ `Linear(1 logit)`.
+* **Tổng số tham số:** Đúng **35.731 tham số** khả huấn luyện.
+* **Hàm mất mát & Suy luận:** `BCEWithLogitsLoss` kết hợp trọng số phạt lớp dương $\text{pos\_weight\_sqrt} = \sqrt{157.924 / 4.078} \approx 6.223009$ (tính nghiêm ngặt từ tập Train `test1 + test2` gồm $157.924$ mẫu Normal và $4.078$ mẫu Attack); áp dụng `Sigmoid` ($\sigma(z_t) \in (0, 1)$) khi suy luận.
+* **Huấn luyện & Dừng sớm (Early Stopping):** Huấn luyện với Adam ($\text{lr}=10^{-3}$, $\text{batch\_size}=256$), gradient clipping ($1.0$), theo dõi `val_pr_auc` trên `test3` với `patience = 15`. Cả 3 seed đạt metric validation cao nhất ngay tại các epoch đầu (`best_epoch`: Seed 42 = Epoch 2, Seed 43 = Epoch 1, Seed 44 = Epoch 2) và dừng huấn luyện tại `stop_epoch` = 16–17 khi hiện tượng quá khớp sớm (early overfitting) xuất hiện trên tập Train.
+
+### 11.2. Giao thức Dữ liệu V2 & Phân Định Mô Thức Học
+* **Scaler Fit Only:** `train1 + train2` (442.802 bản ghi normal — tái sử dụng `scaler.joblib` đóng băng từ V1).
+* **DNN Supervised Train:** `test1 + test2` (162.002 mẫu, gồm 157.924 mẫu Normal và 4.078 mẫu Attack, 25 sự kiện tấn công).
+* **DNN Validation:** `test3` (108.001 mẫu, gồm 106.466 mẫu Normal và 1.535 mẫu Attack, 8 sự kiện tấn công — early stopping và hiệu chuẩn ngưỡng $\tau^*$).
+* **Held-out Evaluation V2:** `test4 + test5` tại $t \ge 30$ (131.942 mẫu chấm điểm, 35.7244 giờ normal, 17 sự kiện tấn công).
+
+> [!IMPORTANT]
+> **Tuyên bố về Khác biệt Mô thức Học:** DNN V2 là mô hình **phân loại có giám sát** (học trực tiếp từ nhãn tấn công thật trên `test1 + test2` và hiệu chuẩn ngưỡng trên `test3` có nhãn), trong khi Persistence, Ridge và GRU V1 là các mô hình **dự báo chuỗi thời gian không giám sát** (chỉ học từ dữ liệu normal `train1 + train2` và chọn ngưỡng $Q_{99.9}$ trên `train3` normal). So sánh trên `test4 + test5` là đối chiếu giữa hai mô thức học và chế độ giám sát khác nhau, không phải so sánh cô lập riêng kiến trúc.
+> Ngoài ra, `test4` và `test5` đã từng được phân tích trong V1 nên **không phải là tập kiểm tra mù hoàn toàn ở cấp độ toàn dự án**.
+
+### 11.3. Bảng Kết quả So sánh trên 17 Sự kiện Chung (`test4 + test5`, $t \ge 30$)
+Nguồn dữ liệu: [`results/v2_dnn/v2_heldout_test4_test5_summary.csv`](results/v2_dnn/v2_heldout_test4_test5_summary.csv) và [`results/v2_dnn/v2_heldout_multiseed_stats.csv`](results/v2_dnn/v2_heldout_multiseed_stats.csv).
+
+| Mô Hình / Nhóm Mô Hình | Chế Độ Giám Sát | Ngưỡng ($\tau$) | TP / 17 | Event Recall | Event Precision | Event F1 | Normal FA / h | Median Delay (s) | Point F1 | Point PR-AUC |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Persistence (V1)** | Không giám sát | $1.680523$ | 11 / 17 | 64.71% | 7.53% | 0.1350 | 3.2751 | 45.0 s | 0.0263 | 0.0712 |
+| **Ridge $\alpha=300$ (V1)** | Không giám sát | $1.400928$ | 13 / 17 | 76.47% | 7.18% | 0.1313 | 4.2548 | **8.0 s** | 0.3061 | 0.3322 |
+| **GRU Seed 42 (V1, Canonical)** | Không giám sát | $1.058582$ | 16 / 17 | 94.12% | 11.68% | 0.2078 | 2.8832 | 13.0 s | 0.4667 | 0.4869 |
+| **GRU 3-Seed Mean ± Std (V1)** | Không giám sát | $Q_{99.9}$ | $16.33 \pm 0.58$ | **96.08% ± 3.40%** | $13.04\% \pm 1.43\%$ | $0.2295 \pm 0.0231$ | **2.5753 ± 0.2841** | **16.50 ± 4.09 s** | **0.4609 ± 0.0135** | 0.4810 ± 0.0052 |
+| **DNN Seed 42 (V2 $\tau^*$, Canonical)** | Có giám sát | $0.953203$ | **17 / 17** | **100.00%** | 11.81% | **0.2112** | **2.3513** | 22.0 s | **0.4758** | 0.4574 |
+| **DNN Seed 43 (V2 $\tau^*$)** | Có giám sát | $0.958436$ | 16 / 17 | 94.12% | 25.40% | **0.4000** | **0.1680** | 22.5 s | 0.4598 | **0.6182** |
+| **DNN Seed 44 (V2 $\tau^*$)** | Có giám sát | $0.958462$ | 8 / 17 | 47.06% | **42.11%** | **0.4444** | **0.0840** | 40.0 s | 0.0301 | 0.5298 |
+| **DNN 3-Seed Mean ± Std (V2 $\tau^*$)** | Có giám sát | $\tau^*$ | $13.67 \pm 4.93$ | $80.39\% \pm 29.02\%$ | **26.44% ± 15.18%** | **0.3519 ± 0.1239** | **0.8678 ± 1.2855** | $28.17 \pm 10.25\text{ s}$ | $0.3219 \pm 0.2528$ | **0.5351 ± 0.0805** |
+| **DNN 3-Seed Mean ± Std (V2 $\tau=0.50$)**| Có giám sát | $0.500000$ | **17.00 ± 0.00** | **100.00% ± 0.00%** | $1.29\% \pm 0.57\%$ | $0.0255 \pm 0.0112$ | $42.8651 \pm 26.0051$ | **4.33 ± 2.31 s** | $0.3360 \pm 0.1361$ | **0.5351 ± 0.0805** |
+
+*Ghi chú:* Seed 44 đạt Event F1 cao hơn do số báo động giả cực thấp (Normal FA chỉ 0.0840 ev/h), nhưng Event Recall giảm xuống 47.06%. Dự án cố định **Seed 42 làm Canonical** trước khi đánh giá held-out, không chọn lọc hậu nghiệm seed có F1 cao nhất.
 
 ---
 
-## 11. Cấu Trúc Kho Lưu Trữ (Repository Structure)
+## 12. Cấu Trúc Kho Lưu Trữ (Repository Structure)
 
 ```text
 DT049/
 ├── README.md                            # Tài liệu tổng quan dự án và hướng dẫn tái lập
 ├── requirements-lock.txt                # Tệp khóa phiên bản thư viện pip chính xác
 ├── configs/                             # Các tệp cấu hình YAML
-│   ├── final_evaluation.yaml            # Tham số giao thức kiểm thử đóng băng
-│   └── primary_gru.yaml                 # Cấu hình huấn luyện chuẩn của mô hình GRU
+│   ├── final_evaluation.yaml            # Tham số giao thức kiểm thử đóng băng V1
+│   ├── primary_gru.yaml                 # Cấu hình huấn luyện chuẩn của mô hình GRU V1
+│   └── dnn_v2_protocol.yaml             # Cấu hình kiến trúc paper Kuchař & Fujdiak (2025) và giao thức V2
 ├── data/                                # Thư mục dữ liệu (dữ liệu thô được gitignore)
 │   ├── processed/hai_21_03/             # Các mảng dữ liệu đã xử lý tối ưu bộ nhớ
 │   └── source/                          # Nơi chứa dữ liệu tải về từ kho gốc
 ├── demo/                                # Ứng dụng Dashboard tương tác Streamlit
-│   ├── app.py                           # Giao diện Dashboard đa trang
+│   ├── app.py                           # Giao diện Dashboard đa trang (bao gồm trang DNN V2)
 │   ├── ui_utils.py                      # Các hàm tiện ích nạp cache và hiển thị
 │   ├── run_dashboard.sh                 # Script khởi chạy nhanh Dashboard cục bộ
 │   ├── stop_dashboard.sh                # Script dừng tiến trình Dashboard an toàn
 │   └── check_product.py                 # Script tự động kiểm tra sức khỏe sản phẩm
 ├── docs/                                # Hệ thống tài liệu kỹ thuật chi tiết
-│   ├── final_test_protocol.md           # Giao thức đánh giá chính thức
-│   ├── final_error_analysis.md          # Phân tích lỗi và độ trễ hậu kiểm thử
+│   ├── final_test_protocol.md           # Giao thức đánh giá chính thức V1
+│   ├── final_error_analysis.md          # Phân tích lỗi và độ trễ hậu kiểm thử V1
 │   ├── ablation_dynamic57.md            # Báo cáo nghiên cứu cắt giảm Dynamic57
+│   ├── experiment_v2_dnn.md             # Báo cáo thiết kế và đánh giá thí nghiệm V2 DNN
 │   └── environment.md                   # Thông số môi trường tính toán & kiểm toán RAM
 ├── models/                              # Các checkpoint mô hình đã đóng băng
 │   ├── preprocessing/scaler.joblib      # Bộ StandardScaler đóng băng (fit trên train1+train2)
 │   ├── baselines/ridge.joblib           # Mô hình hồi quy Ridge đóng băng
-│   └── primary/gru_w30_seed*.pt         # Các checkpoint PyTorch GRU đóng băng (seeds 42, 43, 44)
+│   ├── primary/gru_w30_seed*.pt         # Các checkpoint PyTorch GRU đóng băng (seeds 42, 43, 44)
+│   └── v2_dnn/                          # Checkpoint DNN V2 đóng băng (seeds 42, 43, 44) & metadata
 ├── results/                             # Đầu ra đánh giá và nhật ký kiểm toán
-│   ├── audit/                           # Các bảng kê SHA-256 và nhật ký thực thi
-│   ├── metrics/                         # Các bảng kết quả CSV tổng hợp và chi tiết từng sự kiện
-│   └── figures/                         # Các biểu đồ phân tích chất lượng xuất bản
+│   ├── audit/                           # Các bảng kê SHA-256 và nhật ký thực thi V1
+│   ├── metrics/                         # Các bảng kết quả CSV tổng hợp và chi tiết từng sự kiện V1
+│   ├── figures/                         # Các biểu đồ phân tích chất lượng xuất bản V1
+│   └── v2_dnn/                          # Bảng kết quả CSV, ma trận nhầm lẫn, biểu đồ và audit SHA-256 V2
 └── src/                                 # Các mô-đun mã nguồn Python thực thi
     ├── preprocess.py                    # Chuẩn hóa và fit scaler trên dữ liệu huấn luyện
     ├── preprocess_test.py               # Biến đổi dữ liệu kiểm thử bằng scaler đóng băng
     ├── baseline_persistence.py          # Pipeline thực thi Baseline 0 (Persistence)
     ├── baseline_ridge.py                # Pipeline thực thi Baseline 1 (Ridge)
     ├── train_gru.py                     # Huấn luyện mô hình chính GRU đa seed
-    ├── evaluate_final_test.py           # Engine đánh giá kiểm thử chính thức đóng băng
-    ├── analyze_final_errors.py          # Phân tích chuyên sâu lỗi hậu kiểm thử
-    └── run_ablation_dynamic57.py        # Engine thực thi nghiên cứu cắt giảm Dynamic57
+    ├── evaluate_final_test.py           # Engine đánh giá kiểm thử chính thức đóng băng V1
+    ├── analyze_final_errors.py          # Phân tích chuyên sâu lỗi hậu kiểm thử V1
+    ├── run_ablation_dynamic57.py        # Engine thực thi nghiên cứu cắt giảm Dynamic57
+    ├── dnn_dataset_v2.py                # Pipeline nạp dữ liệu V2 theo giao thức không rò rỉ
+    ├── dnn_model.py                     # Mô hình PyTorch DNN 6 tầng Dense theo Listing 1
+    ├── train_dnn_v2.py                  # Huấn luyện DNN V2 đa seed (BCEWithLogitsLoss, pos_weight)
+    ├── evaluate_v2_heldout.py           # Đánh giá held-out test4+test5 đối đầu V1 vs DNN V2
+    ├── test_dnn_dataset_v2.py           # Bộ kiểm thử đơn vị cho pipeline dữ liệu V2 (7/7 pass)
+    ├── test_dnn_model_v2.py             # Bộ kiểm thử đơn vị cho kiến trúc mô hình V2 (8/8 pass)
+    └── test_evaluate_v2_heldout.py      # Bộ kiểm thử đơn vị cho engine đánh giá V2 (6/6 pass)
 ```
 
 ---
 
-## 12. Tính Tái Lập & Nhật Ký Kiểm Toán (Reproducibility & Audit Trail)
+## 13. Tính Tái Lập & Nhật Ký Kiểm Toán (Reproducibility & Audit Trail)
 
 Toàn bộ lịch sử phát triển và đánh giá khoa học được lưu vết minh bạch trong Git:
 
@@ -243,11 +302,11 @@ Toàn bộ lịch sử phát triển và đánh giá khoa học được lưu v�
 | **Dashboard Interface** | `a9f03c940b066bd3bea46007a21f372915f45db9` | Tích hợp giao diện tương tác Streamlit |
 | **Product Release v1.0** | `dt049-v1.0` (`f8d1b25`) | Hoàn thiện sản phẩm trình diễn cục bộ v1.0 |
 
-Toàn bộ mảng dữ liệu tiền xử lý, trọng số mô hình và tệp CSV kết quả đều được bảo vệ bằng mã băm SHA-256 lưu tại `results/audit/`.
+Toàn bộ mảng dữ liệu tiền xử lý, trọng số mô hình và tệp CSV kết quả đều được bảo vệ bằng mã băm SHA-256 lưu tại `results/audit/` (cho V1) và `results/v2_dnn/` (cho V2).
 
 ---
 
-## 13. Môi Trường & Phiên Bản Phần Mềm (Environment & Software Versions)
+## 14. Môi Trường & Phiên Bản Phần Mềm (Environment & Software Versions)
 
 Toàn bộ thực nghiệm được thực thi hoàn toàn trên máy ảo Kali Linux:
 - **Hệ điều hành:** Kali GNU/Linux Rolling 2026.2 (Linux 6.19.14+kali-amd64)
@@ -272,9 +331,9 @@ psutil==7.2.2
 
 ---
 
-## 14. Hướng Dẫn Chạy Dashboard Tương Tác (Running the Interactive Dashboard)
+## 15. Hướng Dẫn Chạy Dashboard Tương Tác (Running the Interactive Dashboard)
 
-Ứng dụng Dashboard tương tác cho phép trực quan hóa toàn diện bảng so sánh mô hình, dòng thời gian tấn công, chẩn đoán lỗi, khảo sát độ nhạy ngưỡng và kết quả cắt giảm đặc trưng:
+Ứng dụng Dashboard tương tác cung cấp 8 trang phân tích toàn diện: bảng so sánh mô hình, dòng thời gian tấn công, chẩn đoán lỗi, khảo sát độ nhạy ngưỡng, kết quả cắt giảm đặc trưng Dynamic57, kiểm tra sức khỏe hệ thống và trang mới **DNN Replication V2** trực quan hóa kết quả đối đầu V1 vs DNN V2 trên 17 sự kiện held-out (`test4 + test5`), hiện tượng bão hòa xác suất $[0.953, 0.959]$, ma trận nhầm lẫn và bảng kê kiểm toán SHA-256:
 
 ```bash
 # Cách 1: Khởi chạy tự động bằng script đóng gói sẵn
@@ -297,7 +356,7 @@ Sau khi khởi chạy, mở trình duyệt bên trong Kali tại địa chỉ:
 
 ---
 
-## 15. Hướng Dẫn Tái Lập Toàn Bộ Thực Nghiệm (Reproducing Experiments)
+## 16. Hướng Dẫn Tái Lập Toàn Bộ Thực Nghiệm (Reproducing Experiments)
 
 Tất cả các giai đoạn trong pipeline thực nghiệm đều có thể chạy lại thông qua các script Python trong thư mục `src/`:
 
@@ -340,9 +399,23 @@ python src/analyze_final_errors.py
 python src/run_ablation_dynamic57.py
 ```
 
+### Bước 6: Kiểm thử và Đánh giá DNN V2 (Replication Kuchař & Fujdiak, 2025)
+```bash
+# Chạy bộ 3 kiểm thử đơn vị tự động (21/21 tests pass)
+python src/test_dnn_dataset_v2.py
+python src/test_dnn_model_v2.py
+python src/test_evaluate_v2_heldout.py
+
+# Huấn luyện DNN V2 trên 3 seeds 42, 43, 44 (nếu cần huấn luyện lại từ đầu)
+python src/train_dnn_v2.py
+
+# Chạy đánh giá held-out test4 + test5 đối đầu V1 vs DNN V2 và sinh toàn bộ artifact
+python src/evaluate_v2_heldout.py
+```
+
 ---
 
-## 16. Hạn Chế Của Nghiên Cứu (Limitations)
+## 17. Hạn Chế Của Nghiên Cứu (Limitations)
 
 1. **Tính Đặc Thù Của Testbed:** Các kết luận được xác lập trên hệ thống HAI 21.03 và có thể không khái quát hóa trực tiếp sang các bộ dữ liệu ICS khác (như SWaT, WADI) vốn có cấu trúc vật lý hoặc bề mặt tấn công mạng khác biệt.
 2. **Hiệu Chuẩn Chỉ Dựa Trên Dữ Liệu Bình Thường:** Việc chọn ngưỡng dựa hoàn toàn vào tập kiểm định bình thường (`train3`). Trong thực tế vận hành nhà máy dài hạn, hiện tượng trôi cảm biến theo mùa (sensor drift) có thể đòi hỏi cơ chế hiệu chuẩn thích nghi.
@@ -351,11 +424,19 @@ python src/run_ablation_dynamic57.py
 5. **Tính Hai Mặt Của Thước Đo Báo Động Giả:** Tần suất sự kiện báo động giả và tổng thời gian chiếm dụng chuông phản ánh hai khía cạnh vận hành khác nhau: GRU tối ưu hóa việc giảm số lần làm phiền người vận hành ($2.61\text{ ev/h}$), trong khi Persistence có tổng số giây báo động thấp nhất ($3.92\text{ s/h}$).
 6. **Phạm Vi Kiến Trúc:** Dự án tập trung đánh giá sâu một cấu hình GRU gọn nhẹ ($W=30$, Hidden=64, 1 tầng) phù hợp giới hạn phần cứng CPU; các kiến trúc sâu hơn hoặc Transformer nằm ngoài phạm vi đồ án.
 7. **Tính Chất Khảo Sát Của Dynamic57:** Nghiên cứu cắt giảm Dynamic57 được thực hiện hậu nghiệm sau khi đã có kết quả kiểm thử chính thức, đóng vai trò minh chứng giải thích bổ sung chứ không thay thế kết quả chính.
-8. **Khác Biệt So Với Bài Báo Tham Chiếu Gốc:** Bài báo năm 2025 trên tạp chí *Computers & Security* sử dụng bộ dữ liệu tùy chỉnh riêng, do đó không thể so sánh ngang hàng về mặt con số tuyệt đối giữa hai miền vật lý khác nhau.
+8. **Khác Biệt & Sự Không Nhất Quán Của Bài Báo Gốc:** Bài báo năm 2025 trên tạp chí *Computers & Security* sử dụng bộ dữ liệu tùy chỉnh riêng và có sự không nhất quán giữa phần mô tả thực nghiệm (đề cập 87 đặc trưng) với Listing 1 (ghi cứng `input_dim = 10`), do đó không thể so sánh ngang hàng về mặt con số tuyệt đối.
+9. **Khác biệt về Bề mặt Bài toán giữa Paper gốc và V2:** Paper gốc (Kuchař & Fujdiak, 2025) giải bài toán phân loại 4 trạng thái (Normal, Security, Operational, Service) với output sigmoid 4 node, trong khi DNN V2 chuyển dịch sang bài toán nhị phân Normal/Attack với 1 logit trên HAI 21.03 (79 đặc trưng).
+10. **Không Thể So Sánh Tuyệt Đối với Accuracy 99.72% Của Paper Gốc:** Sự khác biệt về testbed, số chiều đặc trưng và định nghĩa nhãn khiến việc so sánh trực tiếp chỉ số thô là vô nghĩa về mặt khoa học.
+11. **Hiện Tượng Bão Hòa Xác Suất Của DNN V2 Là Giả Thuyết Cơ Chế:** Tầng nút cổ chai `Dense(10, tanh)` kết hợp trọng số lớp dương $\text{pos\_weight} \approx 6.223$ dẫn đến hiện tượng xác suất dự báo bị nén dồn vào dải hẹp $[0.953, 0.959]$ trên tập validation, khiến mô hình cực kỳ nhạy cảm với việc dịch chuyển ngưỡng (như thể hiện ở sự sụt giảm recall của Seed 44 tại $\tau^*$). Tuy nhiên, đây là một giả thuyết cơ chế toán học hợp lý, chưa được kiểm chứng bằng thí nghiệm cô lập nhân quả (causal ablation), nên không được kết luận là nguyên nhân duy nhất.
+12. **Tính Chất Bán Mù Của Held-out `test4 + test5`:** Dù DNN V2 chưa từng thấy `test4` và `test5` trong quá trình huấn luyện và chọn ngưỡng, hai tệp này đã từng được khảo sát trong nghiên cứu V1, do đó không phải là tập kiểm thử mù tuyệt đối ở cấp độ toàn dự án.
+13. **Đối Chiếu Giữa Hai Mô Thức Giám Sát Khác Nhau:** GRU/Ridge/Persistence là mô hình dự báo không giám sát (học từ normal), còn DNN là mô hình phân loại có giám sát (học trực tiếp từ nhãn tấn công). Sự so sánh phản ánh sự đánh đổi giữa hai triết lý tiếp cận chứ không đơn thuần là so sánh cấu trúc mạng.
+14. **Giới Hạn Quy Tắc Khớp Sự Kiện 1-1 và FP:** Thước đo `event_level_fp` đo đếm các khoảng báo động dư thừa, bao gồm cả rung chuông trong khoảng tấn công và phân mảnh biên, cần được phân biệt rõ với `normal_fa_events` (báo động giả thuần túy trong giờ bình thường).
+15. **Giới Hạn Tuyên Bố Zero-Day:** Dự án không tuyên bố GRU đã chứng minh phát hiện tấn công zero-day; đây chỉ là mô hình dự báo không giám sát có tiềm năng lý thuyết phát hiện các sai lệch chưa từng biết (unseen deviations), cần được kiểm chứng thêm qua các kịch bản chuyên biệt.
+16. **Chưa Sẵn Sàng Triển Khai Trong Môi Trường Sản Xuất:** Tần suất báo động giả hiện tại ($2.61\text{ ev/h}$ của GRU, tương đương $\sim 20.6$ lần trong ca trực 8 giờ) cho thấy hệ thống vẫn cần các cơ chế lọc hậu xử lý (alarm filtering) và thích nghi ngưỡng; kết quả hiện tại phục vụ mục đích nghiên cứu học thuật giữa kỳ, chưa đủ điều kiện triển khai tự động trong nhà máy công nghiệp thực tế.
 
 ---
 
-## 17. Giao Diện Trình Diễn (Dashboard)
+## 18. Giao Diện Trình Diễn (Dashboard)
 
 Khởi chạy Streamlit Dashboard cục bộ để khám phá trực quan toàn bộ kết quả:
 ```text

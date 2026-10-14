@@ -1,0 +1,167 @@
+# =============================================================================
+# Experiment V2 Configuration: Supervised Binary Feedforward DNN Protocol
+# =============================================================================
+# Reference Paper:
+#   Kuchar & Fujdiak (2025), "Analyzing anomalies in industrial networks:
+#   A data-driven approach to enhance security in manufacturing processes",
+#   Computers & Security, Vol. 153, 104395. DOI: 10.1016/j.cose.2025.104395
+#
+# Protocol Note:
+#   This is Experiment V2 (Supervised DNN adaptation on HAI 21.03).
+#   Because HAI 21.03 train1..train3 contain 100% normal rows (attack=0),
+#   supervised training requires labeled sessions from the original test split.
+#   All V1 artifacts (Persistence, Ridge, GRU) remain strictly frozen and
+#   unmodified. Note that test4 + test5 are held out from DNN V2 training,
+#   validation, and threshold selection, but were previously evaluated in V1
+#   and therefore are NOT a completely blind test of the overall project.
+# =============================================================================
+
+protocol_version: "2.0.0"
+experiment_id: "DT049_V2_SUPERVISED_DNN"
+
+dataset:
+  name: "HAI Security Dataset"
+  version: "21.03"
+  hai_repository_commit: "2a814cebc9a66b06c9e5cd545e2d72e65d383737"
+  processed_test_dir: "data/processed/hai_21_03/final_test"
+  scaler_path: "models/preprocessing/scaler.joblib"
+  scaler_metadata_path: "models/preprocessing/scaler_metadata.json"
+  refit_scaler: false
+  scaler_fit_source:
+    files:
+      - "train1.csv.gz"
+      - "train2.csv.gz"
+    total_rows: 442802
+
+features:
+  input_dim: 79
+  feature_dtype: "float32"
+  timestamp_dtype: "datetime64[s]"
+  label_dtype: "int8"
+  target_label_column: "attack"
+  valid_label_values: [0, 1]
+  excluded_columns:
+    - "time"
+    - "attack"
+    - "attack_P1"
+    - "attack_P2"
+    - "attack_P3"
+
+splits:
+  dnn_train:
+    sessions:
+      - "test1"
+      - "test2"
+    expected_rows_per_session:
+      test1: 43201
+      test2: 118801
+    expected_total_rows: 162002
+    expected_normal_rows: 157924
+    expected_attack_rows: 4078
+    expected_attack_events: 25
+    role: "Supervised binary DNN parameter fitting and class-weight calculation only"
+
+  dnn_validation:
+    sessions:
+      - "test3"
+    expected_rows_per_session:
+      test3: 108001
+    expected_total_rows: 108001
+    expected_normal_rows: 106466
+    expected_attack_rows: 1535
+    expected_attack_events: 8
+    role: "Epoch selection (early stopping), hyperparameter/class-weight selection, and alarm threshold calibration"
+
+  dnn_evaluation_v2:
+    sessions:
+      - "test4"
+      - "test5"
+    expected_rows_per_session:
+      test4: 39601
+      test5: 92401
+    expected_total_rows: 132002
+    expected_normal_rows: 128668
+    expected_attack_rows: 3334
+    expected_attack_events: 17
+    common_v1_alignment_start_idx: 30
+    expected_common_scored_rows: 131942
+    blindness_disclaimer: "Held-out from all DNN V2 training, validation, and hyperparameter/threshold decisions, but previously analyzed during V1 final evaluation (not a completely blind test of the overall project)."
+    role: "Held-out evaluation of DNN V2 and side-by-side comparison against frozen V1 models (Persistence, Ridge, GRU)"
+
+directories:
+  model_dir: "models/v2_dnn"
+  results_dir: "results/v2_dnn"
+  docs_path: "docs/experiment_v2_dnn.md"
+
+reference_architecture:
+  source_paper_doi: "10.1016/j.cose.2025.104395"
+  source_section: "Section 5.5 / Listing 1"
+  paper_original_input_dim: 10
+  paper_prepended_norm_layer: "model.add(norm_layer) present in Listing 1; exact definition unverified. V2 uses frozen offline StandardScaler fit on train1+train2 across 79 HAI features."
+  input_dim: 79
+  hidden_layers: [100, 70, 100, 80, 60, 10]
+  hidden_activations: ["relu", "tanh", "relu", "tanh", "tanh", "tanh"]
+  hidden_activations_verification_status: "VERIFIED_FROM_PAPER_LISTING_1"
+  dropout_rate: 0.3
+  dropout_after_hidden_layer_indices_1based: [5, 6]
+  paper_original_output_units: 4
+  paper_original_output_activation: "sigmoid"
+  v2_adapted_output_units: 1
+  v2_adapted_output_type: "logit"
+  v2_loss_function: "BCEWithLogitsLoss"
+  v2_inference_activation: "sigmoid"
+  v2_trainable_parameters: 35731
+  batch_norm: false
+  layer_norm: false
+  adaptation_disclaimer: "Selective adaptation of Listing 1: preserves 6 hidden Dense layers [100,70,100,80,60,10], verified activations [relu,tanh,relu,tanh,tanh,tanh], and 2 Dropout(0.3) layers, but adapts input_dim (10 -> 79 HAI features), input normalization (unverified norm_layer -> frozen StandardScaler), and output (4-class sigmoid -> 1 binary logit + BCEWithLogitsLoss + sigmoid at inference)."
+
+training_protocol:
+  device: "cpu"
+  cpu_threads: 4
+  interop_threads: 1
+  seeds: [42, 43, 44]
+  batch_size: 512
+  eval_batch_size: 1024
+  max_epochs: 250
+  paper_reference_epochs: 250
+  optimizer:
+    name: "Adam"
+    learning_rate: 0.001
+    weight_decay: 0.00001
+  gradient_clipping:
+    enabled: true
+    max_norm: 1.0
+  loss:
+    name: "BCEWithLogitsLoss"
+    pos_weight_strategy: "sqrt_balanced_from_train"
+    expected_train_pos_weight_sqrt: 6.223009
+    expected_train_pos_weight_balanced: 38.725846
+  model_selection:
+    validation_session: "test3"
+    primary_metric: "val_pr_auc"
+    mode: "max"
+    early_stopping_patience: 15
+    early_stopping_min_delta: 0.00001
+    tie_breaking_order:
+      - "highest_val_pr_auc"
+      - "lowest_val_bce_loss"
+      - "earliest_epoch"
+  threshold_calibration:
+    validation_session: "test3"
+    alignment_start_idx: 30
+    candidate_grid_start: 0.05
+    candidate_grid_end: 0.95
+    candidate_grid_step: 0.05
+    additional_candidates: [0.97, 0.99]
+    validation_quantiles: [0.90, 0.95, 0.97, 0.98, 0.985, 0.99, 0.991, 0.992, 0.995, 0.999]
+    default_reference_threshold: 0.50
+    primary_selection_criterion: "max_validation_event_f1_under_fa_and_fpr_caps"
+    max_normal_fa_events_per_hour_cap: 5.0
+    max_point_fpr_cap: 0.05
+    min_event_recall_floor: 0.75
+    tie_breaking_order:
+      - "highest_val_event_f1"
+      - "lowest_val_normal_fa_events_per_hour"
+      - "highest_val_point_f1"
+      - "closest_to_0.50"
+    protocol_note: "V2 threshold is calibrated on labeled Validation (test3), fundamentally distinct from V1 unsupervised Q99.9 quantile threshold on normal-only train3. Includes empirical validation quantiles and a max_point_fpr_cap=0.05 guard to prevent degenerate always-on alarms caused by bounded Tanh(10) output logits."

@@ -1,0 +1,12 @@
+eval_split,model_id,model_name,operating_mode,threshold,point_tn,point_fp,point_fn,point_tp,point_precision,point_recall,point_f1,point_fpr,point_roc_auc,point_pr_auc
+test4+test5,persistence,Baseline 0: Persistence (V1),V1 Frozen Q99.9 (train3),1.680523,128485,123,3288,46,0.272189,0.013797,0.026263,0.00095639,0.645364,0.071233
+test4+test5,ridge,Baseline 1: Ridge alpha=300 (V1),V1 Frozen Q99.9 (train3),1.400928,128411,197,2696,638,0.764072,0.191362,0.306069,0.00153179,0.78524,0.33221
+test4+test5,gru_seed42,"Primary GRU W=30 Seed 42 (V1, Canonical)",V1 Frozen Q99.9 (train3),1.058582,128423,185,2263,1071,0.852707,0.321236,0.466667,0.00143848,0.846204,0.486911
+test4+test5,gru_seed43,Primary GRU W=30 Seed 43 (V1),V1 Frozen Q99.9 (train3),1.195869,128452,156,2334,1000,0.865052,0.29994,0.445434,0.00121299,0.846895,0.477006
+test4+test5,gru_seed44,Primary GRU W=30 Seed 44 (V1),V1 Frozen Q99.9 (train3),1.076832,128447,161,2259,1075,0.869741,0.322436,0.47046,0.00125187,0.84699,0.479088
+test4+test5,dnn_v2_seed42_tau_star,"Feedforward DNN V2 Seed 42 (Primary τ*, Canonical)",V2 Calibrated τ* on Labeled test3,0.953203,127989,619,2100,1234,0.665947,0.370126,0.475805,0.00481308,0.847786,0.457378
+test4+test5,dnn_v2_seed43_tau_star,Feedforward DNN V2 Seed 43 (Primary τ*),V2 Calibrated τ* on Labeled test3,0.958436,128552,56,2322,1012,0.947566,0.303539,0.459791,0.00043543,0.847953,0.618167
+test4+test5,dnn_v2_seed44_tau_star,Feedforward DNN V2 Seed 44 (Primary τ*),V2 Calibrated τ* on Labeled test3,0.958462,128602,6,3283,51,0.894737,0.015297,0.03008,4.665e-05,0.845722,0.529797
+test4+test5,dnn_v2_seed42_tau_050,Feedforward DNN V2 Seed 42 (Secondary τ=0.50),Secondary Sensitivity τ=0.50,0.5,118868,9740,1279,2055,0.174226,0.616377,0.271664,0.07573401,0.847786,0.457378
+test4+test5,dnn_v2_seed43_tau_050,Feedforward DNN V2 Seed 43 (Secondary τ=0.50),Secondary Sensitivity τ=0.50,0.5,124883,3725,1029,2305,0.382255,0.691362,0.492311,0.02896398,0.847953,0.618167
+test4+test5,dnn_v2_seed44_tau_050,Feedforward DNN V2 Seed 44 (Secondary τ=0.50),Secondary Sensitivity τ=0.50,0.5,114697,13911,937,2397,0.146983,0.718956,0.244069,0.1081659,0.845722,0.529797

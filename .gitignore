@@ -19,6 +19,11 @@ models/baselines/*
 models/primary/*
 !models/primary/*.pt
 !models/primary/gru_metadata.json
+!models/v2_dnn/
+models/v2_dnn/*
+!models/v2_dnn/*.pt
+!models/v2_dnn/dnn_v2_metadata.json
 
 # File tạm
 results/logs/
+results/v2_dnn/*.log

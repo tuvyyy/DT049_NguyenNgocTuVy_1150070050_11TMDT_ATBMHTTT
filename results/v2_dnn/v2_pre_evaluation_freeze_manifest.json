@@ -1,0 +1,157 @@
+{
+  "manifest_type": "DT049_V2_PRE_EVALUATION_FREEZE_MANIFEST",
+  "protocol_version": "2.0.0",
+  "experiment_id": "DT049_V2_SUPERVISED_DNN",
+  "freeze_timestamp_utc": "2026-10-13T05:57:44.916573+00:00",
+  "pre_evaluation_verification_status": "PASS",
+  "heldout_test4_test5_accessed_before_freeze": false,
+  "environment": {
+    "python_version": "3.14.7 (main, Sep  5 2026, 05:55:41) [GCC 16.2.0]",
+    "platform": "Linux-6.19.14+kali-amd64-x86_64-with-glibc2.43",
+    "pytorch_version": "2.14.0+cpu",
+    "numpy_version": "2.5.3",
+    "pandas_version": "3.0.6",
+    "sklearn_version": "1.9.1",
+    "device": "cpu"
+  },
+  "splits": {
+    "scaler_fit_only": [
+      "train1.csv.gz",
+      "train2.csv.gz"
+    ],
+    "dnn_train": [
+      "test1",
+      "test2"
+    ],
+    "dnn_validation": [
+      "test3"
+    ],
+    "dnn_heldout_evaluation_v2": [
+      "test4",
+      "test5"
+    ],
+    "common_evaluation_start_index": 30,
+    "blindness_disclaimer": "test4 and test5 are strictly held out from DNN V2 training, validation, and threshold calibration, but were previously analyzed during V1 final evaluation and are NOT a completely blind test of the overall DT049 project."
+  },
+  "post_hoc_validation_calibration_note": "During Prompt 3 validation analysis on Seed 42 (test3 only), the bounded Tanh(10) final hidden layer compressed predicted probabilities into [0.0528, 0.9539], causing tau=0.05 to trigger a 100% always-on alarm (point_fpr=1.0). Consequently, adding max_point_fpr_cap=0.05, min_event_recall_floor=0.75, and empirical validation quantiles [0.90..0.999] was a post-hoc adjustment performed strictly on Validation (test3) after inspecting Seed 42 validation outputs, NOT an a-priori pre-specified threshold rule. Checkpoint weights of Seed 42 were unchanged, and its calibrated_threshold_test3 field was updated prior to training Seeds 43 and 44; its final SHA-256 matches dnn_v2_metadata.json.",
+  "architecture_contract": {
+    "input_dim": 79,
+    "hidden_layers": [
+      100,
+      70,
+      100,
+      80,
+      60,
+      10
+    ],
+    "hidden_activations": [
+      "relu",
+      "tanh",
+      "relu",
+      "tanh",
+      "tanh",
+      "tanh"
+    ],
+    "activation_status": "VERIFIED_FROM_PAPER_LISTING_1",
+    "dropout_rate": 0.3,
+    "dropout_after_hidden_layers_1based": [
+      5,
+      6
+    ],
+    "output_units": 1,
+    "output_type": "logit",
+    "inference_activation": "sigmoid",
+    "batch_norm": false,
+    "layer_norm": false,
+    "trainable_parameters": 35731
+  },
+  "frozen_checkpoints": {
+    "seed_42": {
+      "seed": 42,
+      "is_canonical": true,
+      "checkpoint_path": "models/v2_dnn/dnn_v2_seed42.pt",
+      "sha256": "3f00a57398251f4519cf54e8ef6605e82b86dc9ecd1bfb33dd9be8dd47c3f8eb",
+      "trainable_parameters": 35731,
+      "hidden_activations": [
+        "relu",
+        "tanh",
+        "relu",
+        "tanh",
+        "tanh",
+        "tanh"
+      ],
+      "activation_status": "VERIFIED_FROM_PAPER_LISTING_1",
+      "best_epoch": 2,
+      "stop_epoch": 17,
+      "stop_reason": "early_stopping_patience_15",
+      "pos_weight": 6.223009,
+      "train_bce_loss_at_best": 0.371984,
+      "val_bce_loss": 0.241895,
+      "val_pr_auc": 0.512897,
+      "val_roc_auc": 0.891617,
+      "frozen_calibrated_threshold_test3": 0.953203,
+      "secondary_sensitivity_threshold": 0.5
+    },
+    "seed_43": {
+      "seed": 43,
+      "is_canonical": false,
+      "checkpoint_path": "models/v2_dnn/dnn_v2_seed43.pt",
+      "sha256": "569741efeee64d3ecf1d017f6a42e171004266a3af88d7035a97f3590aace684",
+      "trainable_parameters": 35731,
+      "hidden_activations": [
+        "relu",
+        "tanh",
+        "relu",
+        "tanh",
+        "tanh",
+        "tanh"
+      ],
+      "activation_status": "VERIFIED_FROM_PAPER_LISTING_1",
+      "best_epoch": 1,
+      "stop_epoch": 16,
+      "stop_reason": "early_stopping_patience_15",
+      "pos_weight": 6.223009,
+      "train_bce_loss_at_best": 0.341254,
+      "val_bce_loss": 0.209642,
+      "val_pr_auc": 0.63983,
+      "val_roc_auc": 0.895439,
+      "frozen_calibrated_threshold_test3": 0.958436,
+      "secondary_sensitivity_threshold": 0.5
+    },
+    "seed_44": {
+      "seed": 44,
+      "is_canonical": false,
+      "checkpoint_path": "models/v2_dnn/dnn_v2_seed44.pt",
+      "sha256": "498bb0346a292ba9e9c7257797bb23c8a6e35e489fcde2ba73f3d332ff6806a3",
+      "trainable_parameters": 35731,
+      "hidden_activations": [
+        "relu",
+        "tanh",
+        "relu",
+        "tanh",
+        "tanh",
+        "tanh"
+      ],
+      "activation_status": "VERIFIED_FROM_PAPER_LISTING_1",
+      "best_epoch": 2,
+      "stop_epoch": 17,
+      "stop_reason": "early_stopping_patience_15",
+      "pos_weight": 6.223009,
+      "train_bce_loss_at_best": 0.334494,
+      "val_bce_loss": 0.436152,
+      "val_pr_auc": 0.562134,
+      "val_roc_auc": 0.90192,
+      "frozen_calibrated_threshold_test3": 0.958462,
+      "secondary_sensitivity_threshold": 0.5
+    }
+  },
+  "tracked_file_sha256": {
+    "configs/dnn_v2_protocol.yaml": "e5578bea7ba8d9e793db7319042dd47ee37ee2588981a0d53f93667a5fdb31e9",
+    "src/dnn_dataset_v2.py": "49e57a2304482d4ef53121b5f35f3f03c6ea74e7fd7c01f11fdc184b348500e3",
+    "src/dnn_model.py": "51a4a4d973fbcba6e0287283eaa983c71db409e18a3c4b04455b94ef982c4391",
+    "src/train_dnn_v2.py": "213a8009097f5b5087d713c92c322421081a44d9d39ef22e7286ad7aefb6f4fe",
+    "models/v2_dnn/dnn_v2_metadata.json": "afffe48d519297c9f75239df49b93edb05881533958d9e15785c56cc0bd7ce1d",
+    "models/preprocessing/scaler.joblib": "cbc43757fb1155a36285b711d9b134d387e20e9775a7ab19c8776749a9000d26",
+    "models/preprocessing/scaler_metadata.json": "1e428deea10be2d31a6198d4cf2936c990a702b9ce80354463bbe9b2a271b56a"
+  }
+}
