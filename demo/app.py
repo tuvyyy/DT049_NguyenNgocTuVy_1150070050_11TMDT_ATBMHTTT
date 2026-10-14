@@ -25,6 +25,8 @@ from ui_utils import (
     check_artifact_health,
     render_download_button,
 )
+from overview import render_overview
+from sidebar import render_sidebar
 
 # Configure Streamlit page layout and appearance
 st.set_page_config(
@@ -35,145 +37,32 @@ st.set_page_config(
 )
 
 # =============================================================================
-# PRODUCT HEADER & STATUS BADGES (Common to all pages)
-# =============================================================================
-st.title("DT049 — Multivariate Time-Series Anomaly Detection on HAI 21.03")
-st.markdown("**Persistence • Ridge • GRU** | *Leakage-aware event detection and detection-delay analysis*")
-
-# Clean status badges using columns
-col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
-with col_b1:
-    st.info("🏷️ **Dataset:** HAI 21.03", icon=None)
-with col_b2:
-    st.info("🔒 **Primary Threshold:** $Q_{99.9}$", icon=None)
-with col_b3:
-    st.info("🎯 **Attack Events:** 50", icon=None)
-with col_b4:
-    st.info("🧠 **Primary Model:** GRU $W=30$", icon=None)
-with col_b5:
-    st.success("✅ **Status:** Frozen Final Test", icon=None)
-
-st.markdown("---")
-
-# =============================================================================
 # SIDEBAR NAVIGATION & PRODUCT METADATA
 # =============================================================================
-st.sidebar.title("🛡️ DT049 Product Demo")
+page = render_sidebar()
 
-navigation_options = [
-    "Overview",
-    "Model Comparison",
-    "Attack Explorer",
-    "Error Analysis",
-    "Threshold Sensitivity",
-    "Dynamic57 Ablation",
-    "Reproducibility",
-    "DNN Replication V2",
-]
-
-page = st.sidebar.radio("Navigation", navigation_options, index=0)
-
-st.sidebar.divider()
-st.sidebar.markdown(
-    """
-    **Product Information**
-    - **Version:** `DT049 v1.0`
-    - **Execution Mode:** Frozen artifacts
-    - **Inference:** Disabled in dashboard
-    - **Official Tag:** `dt049-final-test-v1`
-    """
-)
-st.sidebar.info(
-    "🔒 **Integrity Lock:** Evaluated on unseen official test data under frozen protocol commit `6a0613b`. "
-    "All outputs are read-only from disk."
-)
+if page != "Overview":
+    st.title("DT049 — Multivariate Time-Series Anomaly Detection on HAI 21.03")
+    st.markdown("**Persistence • Ridge • GRU** | *Leakage-aware event detection and detection-delay analysis*")
+    col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
+    with col_b1:
+        st.info("🏷️ **Dataset:** HAI 21.03", icon=None)
+    with col_b2:
+        st.info("🔒 **Primary Threshold:** $Q_{99.9}$", icon=None)
+    with col_b3:
+        st.info("🎯 **Attack Events:** 50", icon=None)
+    with col_b4:
+        st.info("🧠 **Primary Model:** GRU $W=30$", icon=None)
+    with col_b5:
+        st.success("✅ **Status:** Frozen Final Test", icon=None)
+    st.markdown("---")
 
 
 # =============================================================================
 # 1. OVERVIEW
 # =============================================================================
 if page == "Overview":
-    st.header("Executive Summary & Official Benchmark Headline")
-    st.caption("Official Final-Test Performance on 5 Unseen Test Sessions (`test1`–`test5`), Operating Point: Validation Quantile $Q_{99.9}$")
-
-    # Canonical headline KPI cards (Row 1)
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    with kpi1:
-        st.metric(
-            "Total Attacks",
-            "50",
-            help="100% evaluable physical attack events on common evaluation timeline (t >= 30)"
-        )
-    with kpi2:
-        st.metric(
-            "GRU Seed42 Detected",
-            "40 / 50",
-            delta="80.0% Recall"
-        )
-    with kpi3:
-        st.metric(
-            "GRU Seed42 Recall",
-            "80.0%",
-            delta="+10.0% vs Ridge, +36.0% vs Persistence"
-        )
-    with kpi4:
-        st.metric(
-            "GRU Seed42 Event F1",
-            "0.1882",
-            help="Strict 1-to-1 event matching across 109.14 hours normal exposure"
-        )
-
-    # Canonical headline KPI cards (Row 2)
-    kpi5, kpi6, kpi7 = st.columns(3)
-    with kpi5:
-        st.metric(
-            "GRU 3-Seed Mean F1",
-            "0.2015 ± 0.0160",
-            delta="Seeds 42, 43, 44"
-        )
-    with kpi6:
-        st.metric(
-            "Normal FA Rate",
-            "2.61 events/hour",
-            delta="-41.7% vs Ridge (-29.5% vs Persist)",
-            delta_color="inverse",
-            help="3-seed mean of discrete normal false-alarm events per hour of attack-free operation"
-        )
-    with kpi7:
-        st.metric(
-            "Median Detection Delay",
-            "22.0 s",
-            delta="3-seed mean: 22.33 s",
-            help="Canonical GRU seed42 median delay = 22.0 s. Three-seed mean of per-seed medians ≈ 22.33 s."
-        )
-
-    st.markdown("")
-    st.info(
-        "ℹ️ **Evaluation Note:** Event F1 is intentionally strict because alarm events use one-to-one "
-        "attack matching and redundant alarm chatter counts as event-level FP across 109.14 hours of normal operation."
-    )
-
-    st.markdown("---")
-
-    # Primary Comparison Visual & Narrative
-    col_fig, col_text = st.columns([1.6, 1.0])
-    with col_fig:
-        st.subheader("Official Model Performance Comparison")
-        display_figure(
-            "results/figures/final_test/fig_01_final_model_comparison.png",
-            caption="Figure 1: Event-level F1/Precision/Recall, Normal False Alarm Rate, and Detection Latency across all models."
-        )
-
-    with col_text:
-        st.subheader("Key Scientific Findings")
-        st.markdown(
-            r"""
-            - **Temporal Dynamics Advantage:** The compact 1-layer GRU ($W=30$, Hidden=64, 32,975 parameters) correctly detects **$80.0\%$** of multi-sensor attacks ($40/50$), significantly surpassing Persistence ($44.0\%$) and Ridge ($70.0\%$).
-            - **Operator Distraction Reduction:** GRU reduces discrete false-alarm interruptions to **$2.61\text{ events/hour}$** ($41.7\%$ reduction vs Ridge $4.48\text{ ev/h}$ and $29.5\%$ vs Persistence $3.70\text{ ev/h}$).
-            - **Detection Latency:** Canonical GRU seed 42 achieves a median detection delay of **$22.0\text{ s}$** (3-seed mean: $22.33\text{ s}$).
-            - **Operational Reality:** *This system demonstrates strong research benchmark performance on HAI 21.03; it does not claim zero error or unassisted production readiness.*
-            """
-        )
+    render_overview()
 
 
 # =============================================================================
