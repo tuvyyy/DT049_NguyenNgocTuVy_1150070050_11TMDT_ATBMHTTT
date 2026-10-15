@@ -122,7 +122,7 @@ class TestDNNV2UI(unittest.TestCase):
         for option in self.app.selectbox(key="dnn_stability_view").options[1:]:
             self.app.selectbox(key="dnn_stability_view").select(option).run()
             self.assertFalse(self.app.exception)
-            self.assertEqual(len(self.app.get("imgs")), 1)
+            self.assertEqual(len(self.app.get("image")), 1)
             self.assertFalse(self.app.dataframe)
         self.tab(4)
         self.assertFalse(self.app.expander[0].proto.expanded)
