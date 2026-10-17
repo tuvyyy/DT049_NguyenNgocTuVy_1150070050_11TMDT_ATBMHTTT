@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import streamlit as st
+from be.artifacts import REPO_ROOT
 
 
 NAVIGATION = (
@@ -15,7 +16,6 @@ NAVIGATION = (
     ("Experiments", (
         ("Threshold Sensitivity", "threshold", "tune"),
         ("Dynamic57 Ablation", "ablation", "layers"),
-        ("DNN Replication V2", "dnn", "account_tree"),
     )),
     ("Project", (
         ("Reproducibility", "reproducibility", "description"),
@@ -28,11 +28,16 @@ def _select_page(page):
 
 
 def render_sidebar():
-    pages = {page for _, items in NAVIGATION for page, _, _ in items}
+    navigation = list(NAVIGATION)
+    if (REPO_ROOT / "demo/dnn_v2.py").is_file():
+        # Restoring the archived DNN files enables its menu without changing GRU.
+        group, items = navigation[1]
+        navigation[1] = (group, items + (("DNN Replication V2", "dnn", "account_tree"),))
+    pages = {page for _, items in navigation for page, _, _ in items}
     if st.session_state.get("navigation") not in pages:
         st.session_state["navigation"] = "Overview"
     current = st.session_state["navigation"]
-    css = Path(__file__).with_name("sidebar.css").read_text(encoding="utf-8")
+    css = (Path(__file__).parent / "styles/sidebar.css").read_text(encoding="utf-8")
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
     with st.sidebar:
@@ -43,7 +48,7 @@ def render_sidebar():
             unsafe_allow_html=True,
         )
         with st.container(key="sidebar_nav"):
-            for group, items in NAVIGATION:
+            for group, items in navigation:
                 st.markdown(f'<div class="sb-group-label">{group}</div>', unsafe_allow_html=True)
                 for page, key, icon in items:
                     st.button(

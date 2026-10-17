@@ -17,7 +17,7 @@ from threading import Thread
 import traceback
 import uuid
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 RUNS = ROOT / "runs/gru"
 STAGES = ("data", "train", "evaluate")
 SESSIONS = [f"test{i}" for i in range(1, 6)]

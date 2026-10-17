@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-import gru_runtime as runtime
+from be import gru_runtime as runtime
 
 STEPS = ["1 · Dữ liệu", "2 · Huấn luyện GRU", "3 · Đánh giá", "4 · Kiểm tra sự kiện"]
 
@@ -218,8 +218,9 @@ def _events(path, state):
     st.caption("Sai số và ngưỡng lấy từ lần chạy này. Độ trễ ở trên là của riêng sự kiện đang chọn.")
 
 
-def render_gru_presentation():
-    _html(f'<style>{Path(__file__).with_suffix(".css").read_text(encoding="utf-8")}</style>')
+def render_gru_workflow():
+    css = Path(__file__).parent / "styles/gru_workflow.css"
+    _html(f'<style>{css.read_text(encoding="utf-8")}</style>')
     with st.container(key="gru_flow"):
         _html('<header class="gf-header"><span>DT049 / GRU</span><h1>Thực hiện GRU</h1><p>Chuẩn bị dữ liệu → huấn luyện → đánh giá → kiểm tra sự kiện</p></header>')
         path = _current_run()

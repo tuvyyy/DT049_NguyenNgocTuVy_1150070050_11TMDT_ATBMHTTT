@@ -1,4 +1,4 @@
-/* Loaded only by Overview; other pages retain their existing presentation. */
+/* Frontend styles loaded only by Overview. */
 [data-testid="stAppViewContainer"] { background: #f5f7f9; color: #172e3b; }
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stMainBlockContainer"] { max-width: 1480px; padding: 2.5rem 3rem 2rem; }

@@ -22,7 +22,22 @@ if VENV_PYTHON.exists() and sys.executable != str(VENV_PYTHON):
 # 1. Required Dashboard Scripts
 DASHBOARD_SOURCES = [
     "demo/app.py",
-    "demo/ui_utils.py",
+    "demo/fe/app.py",
+    "demo/fe/gru_workflow.py",
+    "demo/fe/styles/gru_workflow.css",
+    "demo/fe/styles/overview.css",
+    "demo/fe/styles/sidebar.css",
+    "demo/fe/overview.py",
+    "demo/fe/sidebar.py",
+    "demo/fe/ui_utils.py",
+    "demo/fe/pages/comparison.py",
+    "demo/fe/pages/attacks.py",
+    "demo/fe/pages/error_analysis.py",
+    "demo/fe/pages/threshold.py",
+    "demo/fe/pages/ablation.py",
+    "demo/fe/pages/reproducibility.py",
+    "demo/be/gru_runtime.py",
+    "demo/be/artifacts.py",
     "demo/run_dashboard.sh",
     "demo/stop_dashboard.sh",
 ]

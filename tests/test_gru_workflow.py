@@ -14,11 +14,11 @@ import numpy as np
 import pandas as pd
 from streamlit.testing.v1 import AppTest
 
-DEMO = Path(__file__).resolve().parent
-ROOT = DEMO.parent
+ROOT = Path(__file__).resolve().parent.parent
+DEMO = ROOT / "demo"
 sys.path.insert(0, str(DEMO))
-import gru_runtime as runtime
-from gru_presentation import STEPS
+from be import gru_runtime as runtime
+from fe.gru_workflow import STEPS
 
 
 def fixture(source, count=96):
@@ -76,16 +76,20 @@ class TestGRUExecutionUI(unittest.TestCase):
 
     def test_missing_source_is_reported_without_launch(self):
         self.app.text_input(key="gru_source").set_value("/this-folder-does-not-exist")
-        with patch("gru_runtime.launch") as launch:
+        with patch("be.gru_runtime.launch") as launch:
             next(button for button in self.app.button if button.label == "Chuẩn bị dữ liệu").click().run()
             self.assertFalse(self.app.exception)
             self.assertTrue(self.app.error)
             launch.assert_not_called()
 
-    def test_other_views_and_seven_pages_still_work(self):
+    def test_other_gru_views_work_and_dnn_is_archived(self):
         self.app.radio(key="overview_mode").set_value("Tổng quan nghiên cứu").run()
         self.assertFalse(self.app.exception)
-        for key in ("nav_models", "nav_attacks", "nav_errors", "nav_threshold", "nav_ablation", "nav_dnn", "nav_reproducibility"):
+        if (DEMO / "dnn_v2.py").exists():
+            self.assertIn("nav_dnn", [button.key for button in self.app.button])
+        else:
+            self.assertNotIn("nav_dnn", [button.key for button in self.app.button])
+        for key in ("nav_models", "nav_attacks", "nav_errors", "nav_threshold", "nav_ablation", "nav_reproducibility"):
             self.app.button(key=key).click().run()
             self.assertFalse(self.app.exception, key)
 
@@ -110,7 +114,7 @@ class TestGRURuntime(unittest.TestCase):
                     runtime.launch(path, "evaluate", ["test1"])
                 with self.assertRaises(ValueError):
                     runtime.launch(path, "arbitrary-command")
-                with patch("gru_runtime.subprocess.Popen") as process:
+                with patch("be.gru_runtime.subprocess.Popen") as process:
                     process.return_value.pid = 123
                     runtime.launch(path, "data")
                     args, kwargs = process.call_args

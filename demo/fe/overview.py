@@ -5,7 +5,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from ui_utils import display_figure, load_csv, render_download_button
+from fe.ui_utils import display_figure, load_csv, render_download_button
 
 
 def _html(markup):
@@ -27,7 +27,7 @@ def _kpi(label, value, unit, note, context, accent=False):
 
 
 def render_overview():
-    css = Path(__file__).with_name("overview.css").read_text(encoding="utf-8")
+    css = (Path(__file__).parent / "styles/overview.css").read_text(encoding="utf-8")
     _html(f"<style>{css}</style>")
     _html(
         '<div class="ov-topline"><div><span class="ov-brand">DT049</span>'

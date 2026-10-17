@@ -1,4 +1,4 @@
-/* Shared sidebar: native buttons keep keyboard navigation and callbacks intact. */
+/* Frontend sidebar styles; native navigation buttons remain accessible. */
 [data-testid="stSidebar"] {
     background: #152d38;
     color: #d7e0e5;
