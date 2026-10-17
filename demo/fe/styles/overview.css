@@ -99,3 +99,63 @@
     [data-testid="stMain"] [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
     [data-testid="stMain"] [data-testid="stColumn"] { flex: 1 1 100%; min-width: 100%; }
 }
+
+/* ==============================================================================
+   Top Mode Switcher (Overview Mode Bar): Clean Segmented Control Tabs
+   ============================================================================== */
+.st-key-overview_mode_bar {
+    margin-bottom: 18px !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadio"] [data-testid="stRadioGroup"] {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    background: #e2e8f0 !important;
+    padding: 5px !important;
+    border-radius: 12px !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"] {
+    margin: 0 !important;
+    border-radius: 8px !important;
+    padding: 9px 22px !important;
+    cursor: pointer !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"] svg,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] input,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] > div > div:first-child,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] label > div:first-child {
+    display: none !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"] p,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] span {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    margin: 0 !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"]:hover {
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"][data-selected="true"],
+.st-key-overview_mode_bar [data-testid="stRadioOption"]:has(input:checked) {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"][data-selected="true"] p,
+.st-key-overview_mode_bar [data-testid="stRadioOption"]:has(input:checked) p {
+    color: #0f172a !important;
+    font-weight: 750 !important;
+}
+

@@ -28,9 +28,9 @@ def _reset():
         st.session_state.pop(key, None)
 
 
-def _section(number, title, description):
-    _html(f'<div class="gf-section"><span>BƯỚC {number} / {len(STEPS)}</span>'
-          f'<h2>{escape(title)}</h2><p>{escape(description)}</p></div>')
+def _section(number, title, description=""):
+    desc_html = f'<p>{escape(description)}</p>' if description else ''
+    _html(f'<div class="gf-section"><h2>{escape(title)}</h2>{desc_html}</div>')
 
 
 def _cards(items):
@@ -75,7 +75,7 @@ def _current_run():
 
 
 def _data(path, state):
-    _section(1, "Chọn và chuẩn bị dữ liệu", "Chọn thư mục trên máy đang chạy app, sau đó bấm Chuẩn bị dữ liệu.")
+    _section(1, "1. Chuẩn bị dữ liệu")
     if path is not None:
         settings = runtime.read_json(path / "settings.json")
         st.caption(f'Nguồn: {settings["source"]} · {"Nhanh: tối đa 10.000 dòng mỗi phiên train/validation" if settings["row_limit"] else "Toàn bộ dữ liệu"}')
@@ -113,7 +113,7 @@ def _data(path, state):
 
 
 def _train(path, state):
-    _section(2, "Thiết lập và chạy GRU", "Chọn thông số, bấm Huấn luyện GRU và theo dõi log ngay bên dưới.")
+    _section(2, "2. Huấn luyện mô hình GRU")
     if path is None or "data" not in state.get("completed", []):
         st.info("Chuẩn bị dữ liệu ở bước 1 trước.")
         return
@@ -155,7 +155,7 @@ def _train(path, state):
 
 
 def _evaluate(path, state):
-    _section(3, "Chạy dự đoán và đánh giá", "Chọn phiên test; mô hình vừa huấn luyện sẽ dự đoán và tính kết quả thật.")
+    _section(3, "3. Đánh giá kiểm thử")
     if path is None or "train" not in state.get("completed", []):
         st.info("Huấn luyện xong ở bước 2 trước khi đánh giá.")
         return
@@ -170,17 +170,17 @@ def _evaluate(path, state):
         rate = result["normal_fa_events_per_hour"]
         delay = result["median_delay_sec"]
         _cards([("Sự kiện phát hiện", f'{result["tp"]}/{total}', " + ".join(result["sessions"])),
-                ("Event F1", f'{result["event_f1"]:.6f}', "Kết quả vừa tính"),
-                ("Normal FA/h", f"{rate:.4f}" if rate is not None else "N/A", "Giờ dữ liệu bình thường"),
-                ("Median Delay", f"{delay:g} giây" if delay is not None else "N/A", "Sự kiện phát hiện được")])
-        st.success("Đã đánh giá xong. Bấm Tiếp theo để kiểm tra từng sự kiện.")
+                ("Event F1", f'{result["event_f1"]:.6f}', "F1 Score"),
+                ("Normal FA/h", f"{rate:.4f}" if rate is not None else "N/A", "Báo động giả / giờ"),
+                ("Median Delay", f"{delay:g} giây" if delay is not None else "N/A", "Độ trễ trung vị")])
+        st.success("Đánh giá hoàn tất. Bấm Tiếp theo để xem chi tiết từng sự kiện.")
         with st.expander("Log đánh giá & tải kết quả", expanded=False):
             _log(path, "evaluate")
             st.download_button("Tải kết quả lần chạy", (path / "evaluation.json").read_bytes(), file_name=f"{path.name}_evaluation.json", mime="application/json")
 
 
 def _events(path, state):
-    _section(4, "Kiểm tra sự kiện của lần vừa chạy", "Chọn sự kiện để xem cảnh báo, độ trễ và đường sai số thực tế.")
+    _section(4, "4. Chi tiết sự kiện & Cảnh báo")
     if path is None or "evaluate" not in state.get("completed", []):
         st.info("Chạy đánh giá ở bước 3 trước.")
         return
@@ -222,13 +222,13 @@ def render_gru_workflow():
     css = Path(__file__).parent / "styles/gru_workflow.css"
     _html(f'<style>{css.read_text(encoding="utf-8")}</style>')
     with st.container(key="gru_flow"):
-        _html('<header class="gf-header"><span>DT049 / GRU</span><h1>Thực hiện GRU</h1><p>Chuẩn bị dữ liệu → huấn luyện → đánh giá → kiểm tra sự kiện</p></header>')
+        _html('<header class="gf-header"><h1>Thực hiện mô hình GRU</h1></header>')
         path = _current_run()
         state = runtime.read_state(path) if path else {}
         busy = state.get("status") == "running"
         if path:
             settings = runtime.read_json(path / "settings.json")
-            st.caption(f'Phiên: {path.name} · seed {settings["seed"]} · {"Chạy nhanh" if settings["row_limit"] else "Toàn bộ dữ liệu"} · Kết quả mới, tách khỏi benchmark chính thức')
+            st.caption(f'Lần chạy: {path.name} · Seed {settings["seed"]} · {"Chạy nhanh" if settings["row_limit"] else "Toàn bộ dữ liệu"}')
         if st.session_state.get("gru_step") not in STEPS:
             st.session_state["gru_step"] = STEPS[0]
         step = st.radio("Các bước thực hiện", STEPS, horizontal=True, label_visibility="collapsed", key="gru_step", width="stretch")
@@ -252,7 +252,7 @@ def render_gru_workflow():
             with back:
                 st.button("Trước", key="gru_back", disabled=index == 0, on_click=_go, args=(index - 1,), width="stretch")
             with middle:
-                st.caption(f"Bước {index + 1}/{len(STEPS)} · Thao tác chạy thật")
+                st.caption(f"Bước {index + 1} / {len(STEPS)}")
             with forward:
                 prerequisite = runtime.STAGES[index] if index < 3 else "evaluate"
                 st.button("Tiếp theo", key="gru_next", type="primary", disabled=index == 3 or prerequisite not in state.get("completed", []), on_click=_go, args=(index + 1,), width="stretch")

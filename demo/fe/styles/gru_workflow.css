@@ -1,10 +1,10 @@
 /* ==============================================================================
-   DT049 — GRU Interactive Workflow: Clean, Basic & High-Legibility Styling
+   DT049 — GRU Interactive Workflow: Minimalist, Symmetrical & Accessible
    ============================================================================== */
 
-/* Harmonize background with dashboard light enterprise theme */
+/* Harmonize background with light enterprise theme */
 body:has(.st-key-gru_flow) .stMainBlockContainer {
-    padding-top: 2.2rem;
+    padding-top: 1.8rem;
     padding-bottom: 2rem;
     max-width: 1480px;
 }
@@ -16,183 +16,294 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
     color: #1e293b;
 }
 
+/* ==============================================================================
+   Top Mode Switcher (Overview Mode Bar): Segmented Tabs (NO DOTS)
+   ============================================================================== */
+.st-key-overview_mode_bar {
+    margin-bottom: 18px !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadio"] [data-testid="stRadioGroup"] {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    background: #e2e8f0 !important;
+    padding: 5px !important;
+    border-radius: 12px !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"] {
+    margin: 0 !important;
+    border-radius: 8px !important;
+    padding: 9px 22px !important;
+    cursor: pointer !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"] svg,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] input,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] > div > div:first-child,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] label > div:first-child {
+    display: none !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"] p,
+.st-key-overview_mode_bar [data-testid="stRadioOption"] span {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    margin: 0 !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"]:hover {
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"][data-selected="true"],
+.st-key-overview_mode_bar [data-testid="stRadioOption"]:has(input:checked) {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
+}
+
+.st-key-overview_mode_bar [data-testid="stRadioOption"][data-selected="true"] p,
+.st-key-overview_mode_bar [data-testid="stRadioOption"]:has(input:checked) p {
+    color: #0f172a !important;
+    font-weight: 750 !important;
+}
+
+/* ==============================================================================
+   Main Workflow Container
+   ============================================================================== */
 .st-key-gru_flow {
     color: #1e293b;
     font-size: 16px;
 }
 
 .st-key-gru_flow [data-testid="stVerticalBlock"] {
-    gap: 0.9rem;
+    gap: 0.8rem;
 }
 
-/* Header */
+/* Header: Clean & Minimalist */
 .st-key-gru_flow .gf-header {
-    margin: 0 0 14px;
-}
-
-.st-key-gru_flow .gf-header > span,
-.st-key-gru_flow .gf-section > span {
-    display: inline-block;
-    color: #0369a1;
-    background: #e0f2fe;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    padding: 4px 10px;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
+    margin: 0 0 16px;
 }
 
 .st-key-gru_flow .gf-header h1 {
     color: #0f172a;
-    font-size: 32px;
+    font-size: 30px;
     line-height: 1.25;
-    margin: 4px 0 8px;
+    margin: 0 0 4px;
     padding: 0;
     font-weight: 750;
 }
 
-.st-key-gru_flow .gf-header p {
-    color: #475569;
-    font-size: 16px;
-    line-height: 1.5;
-    margin: 0;
+/* ==============================================================================
+   Step Navigation Bar: Exactly 4 Equal Symmetrical Columns, NO DOTS
+   ============================================================================== */
+.st-key-gru_flow [data-testid="stRadio"]:has(input[value*="Dữ liệu"]),
+.st-key-gru_flow [data-testid="stRadio"]:has([aria-label*="Các bước"]),
+.st-key-gru_flow > [data-testid="stVerticalBlock"] > div:nth-child(2) [data-testid="stRadio"],
+.st-key-gru_flow div[data-testid="stRadio"] {
+    width: 100% !important;
+    margin-bottom: 14px !important;
 }
 
-/* Step Navigation Bar (Horizontal Tabs) */
-.st-key-gru_flow [data-testid="stRadio"] [role="radiogroup"] {
-    display: flex;
-    gap: 8px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 6px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+.st-key-gru_flow [data-testid="stRadioGroup"],
+.st-key-gru_flow [role="radiogroup"] {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
 }
 
-.st-key-gru_flow [data-testid="stRadio"] [role="radiogroup"] label {
-    flex: 1;
-    margin: 0;
-    padding: 12px 16px;
-    border-radius: 8px;
-    min-height: 48px;
-    justify-content: center;
-    border: 1px solid transparent;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.15s ease;
+.st-key-gru_flow [data-testid="stRadioOption"],
+.st-key-gru_flow [role="radiogroup"] > label,
+.st-key-gru_flow [role="radiogroup"] > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 54px !important;
+    padding: 12px 14px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.15s ease !important;
+    margin: 0 !important;
 }
 
-.st-key-gru_flow [data-testid="stRadio"] [role="radiogroup"] label > div:first-child {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    overflow: hidden;
+/* Hide ALL radio circles and dots */
+.st-key-gru_flow [data-testid="stRadioOption"] svg,
+.st-key-gru_flow [data-testid="stRadioOption"] input,
+.st-key-gru_flow [data-testid="stRadioOption"] > div > div:first-child,
+.st-key-gru_flow [data-testid="stRadioOption"] label > div:first-child,
+.st-key-gru_flow [role="radiogroup"] label > div:first-child {
+    display: none !important;
 }
 
-.st-key-gru_flow [data-testid="stRadio"] [role="radiogroup"] label p {
-    color: #475569 !important;
+.st-key-gru_flow [data-testid="stRadioOption"] p,
+.st-key-gru_flow [data-testid="stRadioOption"] span,
+.st-key-gru_flow [role="radiogroup"] label p {
     font-size: 16px !important;
-    font-weight: 600;
-    margin: 0;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    margin: 0 !important;
 }
 
-.st-key-gru_flow [data-testid="stRadio"] label:has(input:checked) {
-    background: #2563eb !important;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+/* Hover state on unselected step */
+.st-key-gru_flow [data-testid="stRadioOption"]:hover,
+.st-key-gru_flow [role="radiogroup"] > label:hover {
+    border-color: #cbd5e1 !important;
+    background: #f8fafc !important;
 }
 
-.st-key-gru_flow [data-testid="stRadio"] label:has(input:checked) p {
+/* Active Selected Step */
+.st-key-gru_flow [data-testid="stRadioOption"][data-selected="true"],
+.st-key-gru_flow [data-testid="stRadioOption"]:has(input:checked),
+.st-key-gru_flow [role="radiogroup"] label:has(input:checked) {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 3px 10px rgba(29, 78, 216, 0.28) !important;
+}
+
+.st-key-gru_flow [data-testid="stRadioOption"][data-selected="true"] p,
+.st-key-gru_flow [data-testid="stRadioOption"]:has(input:checked) p,
+.st-key-gru_flow [data-testid="stRadioOption"][data-selected="true"] span,
+.st-key-gru_flow [data-testid="stRadioOption"]:has(input:checked) span,
+.st-key-gru_flow [role="radiogroup"] label:has(input:checked) p {
     color: #ffffff !important;
-    font-weight: 700;
+    font-weight: 750 !important;
 }
 
-.st-key-gru_flow [data-testid="stRadio"] label:focus-within {
-    outline: 2px solid #2563eb;
-    outline-offset: -2px;
-}
-
-/* Step Section Box */
+/* ==============================================================================
+   Step Section Box: Minimalist
+   ============================================================================== */
 .st-key-gru_flow .gf-section {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 20px 24px;
-    margin: 8px 0 12px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    padding: 18px 22px;
+    margin: 4px 0 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .st-key-gru_flow .gf-section h2 {
     color: #0f172a;
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.3;
     padding: 0;
-    margin: 4px 0 8px;
+    margin: 2px 0 4px;
     font-weight: 700;
 }
 
-.st-key-gru_flow .gf-section p {
-    color: #475569;
-    font-size: 16px;
-    line-height: 1.5;
-    margin: 0;
-}
-
-/* Stat / Metric Cards */
+/* ==============================================================================
+   Stat / Metric Cards: Symmetrical 4 Columns
+   ============================================================================== */
 .st-key-gru_flow .gf-stats {
-    display: grid;
-    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
-    gap: 16px;
-    margin: 8px 0 14px;
+    display: grid !important;
+    grid-template-columns: repeat(var(--columns, 4), minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    margin: 10px 0 16px !important;
 }
 
 .st-key-gru_flow .gf-stat {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 20px 22px;
+    padding: 18px 20px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    text-align: left;
 }
 
 .st-key-gru_flow .gf-stat > span {
-    color: #64748b;
+    color: #475569;
     display: block;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 650;
     line-height: 1.3;
 }
 
 .st-key-gru_flow .gf-stat strong {
     color: #0f172a;
     display: block;
-    font-size: 38px;
+    font-size: 36px;
     font-weight: 750;
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
-    margin: 8px 0 6px;
+    margin: 8px 0 4px;
 }
 
 .st-key-gru_flow .gf-stat small {
     color: #64748b;
-    font-size: 14px;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.3;
     display: block;
 }
 
-/* Form, Inputs and Labels */
+/* ==============================================================================
+   Alert Boxes (st.success, st.info): High-Contrast & Clear Text
+   ============================================================================== */
+.st-key-gru_flow [data-testid="stAlert"] {
+    border-radius: 10px !important;
+    padding: 14px 18px !important;
+    margin: 12px 0 !important;
+}
+
+/* Success banner: Dark green text on mint with solid emerald border */
+.st-key-gru_flow [data-testid="stAlert"]:has([data-testid="stAlertSuccess"]),
+.st-key-gru_flow div:has(> [data-testid="stAlertSuccess"]) {
+    background-color: #ecfdf5 !important;
+    border: 1.5px solid #059669 !important;
+}
+
+.st-key-gru_flow [data-testid="stAlert"] [data-testid="stAlertSuccess"] p,
+.st-key-gru_flow [data-testid="stAlert"] [data-testid="stAlertSuccess"] span,
+.st-key-gru_flow [data-testid="stAlert"]:has([data-testid="stAlertSuccess"]) p,
+.st-key-gru_flow [data-testid="stAlert"]:has([data-testid="stAlertSuccess"]) span {
+    color: #064e3b !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+/* Info banner: Dark blue text on soft sky */
+.st-key-gru_flow [data-testid="stAlert"]:has([data-testid="stAlertInfo"]),
+.st-key-gru_flow div:has(> [data-testid="stAlertInfo"]) {
+    background-color: #f0f9ff !important;
+    border: 1.5px solid #0284c7 !important;
+}
+
+.st-key-gru_flow [data-testid="stAlert"] [data-testid="stAlertInfo"] p,
+.st-key-gru_flow [data-testid="stAlert"] [data-testid="stAlertInfo"] span,
+.st-key-gru_flow [data-testid="stAlert"]:has([data-testid="stAlertInfo"]) p,
+.st-key-gru_flow [data-testid="stAlert"]:has([data-testid="stAlertInfo"]) span {
+    color: #0c4a6e !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+/* ==============================================================================
+   Form, Inputs and Labels
+   ============================================================================== */
 .st-key-gru_flow [data-testid="stForm"] {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 24px;
+    padding: 22px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
 .st-key-gru_flow [data-testid="stWidgetLabel"] p {
-    color: #1e293b !important;
+    color: #0f172a !important;
     font-size: 16px !important;
     font-weight: 650 !important;
     margin-bottom: 4px;
@@ -248,7 +359,7 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
 .st-key-gru_flow [data-testid="stCaptionContainer"] p {
     color: #64748b;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 /* Event Inspection Card */
@@ -256,11 +367,11 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
     display: grid;
     grid-template-columns: 1fr 1fr;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1.5px solid #e2e8f0;
     border-radius: 12px;
-    padding: 24px;
-    gap: 24px;
-    margin: 8px 0 14px;
+    padding: 22px;
+    gap: 20px;
+    margin: 8px 0 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
@@ -273,25 +384,20 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
 .st-key-gru_flow .gf-event h3 {
     font-size: 26px;
     padding: 0;
-    margin: 6px 0 14px;
+    margin: 4px 0 10px;
     font-weight: 750;
 }
 
 .st-key-gru_flow .gf-event p {
     color: #334155;
     font-size: 16px;
-    margin: 8px 0;
+    margin: 6px 0;
 }
 
 .st-key-gru_flow .gf-event strong {
     color: #0f172a;
     font-size: 16px;
     margin-left: 10px;
-}
-
-.st-key-gru_flow .gf-event small {
-    color: #64748b;
-    font-size: 14px;
 }
 
 .st-key-gru_flow .gf-event .gf-detected {
@@ -303,13 +409,13 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
 }
 
 .st-key-gru_flow .gf-event-outcome {
-    border-left: 1px solid #e2e8f0;
-    padding-left: 24px;
+    border-left: 1.5px solid #e2e8f0;
+    padding-left: 20px;
 }
 
 /* Footer & Buttons */
 .st-key-gru_flow .st-key-gru_footer {
-    border-top: 1px solid #e2e8f0;
+    border-top: 1.5px solid #e2e8f0;
     padding-top: 16px;
     margin-top: 8px;
 }
@@ -321,14 +427,14 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
 }
 
 .st-key-gru_flow button[kind="primary"] {
-    background: #2563eb;
-    border: 1px solid #2563eb;
+    background: #1d4ed8;
+    border: 1px solid #1d4ed8;
     color: #ffffff;
     font-size: 16px;
     font-weight: 700;
     border-radius: 8px;
     min-height: 46px;
-    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 2px 5px rgba(29, 78, 216, 0.2);
 }
 
 .st-key-gru_flow button[kind="primary"] p {
@@ -338,8 +444,8 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
 }
 
 .st-key-gru_flow button[kind="primary"]:hover {
-    background: #1d4ed8;
-    border-color: #1d4ed8;
+    background: #1e40af;
+    border-color: #1e40af;
 }
 
 .st-key-gru_flow button[kind="primary"]:disabled {
@@ -369,16 +475,12 @@ body:has(.st-key-gru_flow) [data-testid="stHeader"] {
 }
 
 /* Responsive */
-@media (max-width: 1100px) {
-    .st-key-gru_flow .gf-header h1 { font-size: 28px; }
-    .st-key-gru_flow .gf-stat { padding: 16px; }
-    .st-key-gru_flow .gf-stat strong { font-size: 32px; }
-}
-
-@media (max-width: 760px) {
-    .st-key-gru_flow .gf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .st-key-gru_flow .gf-event { grid-template-columns: 1fr; }
-    .st-key-gru_flow .gf-event-outcome { border-left: 0; border-top: 1px solid #e2e8f0; padding: 16px 0 0; }
-    .st-key-gru_flow [data-testid="stRadio"] [role="radiogroup"] { flex-wrap: wrap; }
-    .st-key-gru_flow [data-testid="stRadio"] [role="radiogroup"] label { flex-basis: 48%; }
+@media (max-width: 1000px) {
+    .st-key-gru_flow [data-testid="stRadioGroup"],
+    .st-key-gru_flow [role="radiogroup"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .st-key-gru_flow .gf-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
 }
