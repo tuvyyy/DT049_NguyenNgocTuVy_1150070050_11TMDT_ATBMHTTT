@@ -65,7 +65,7 @@ def render_sidebar():
             with st.expander("Project details", icon=":material/info:"):
                 st.markdown(
                     "**DT049 · Research demo**\n\n"
-                    "Results are read from saved artifacts. Model inference is disabled in the dashboard.\n\n"
+                    "Official benchmark pages read saved artifacts. The Thực hiện GRU workspace runs training and inference in isolated folders.\n\n"
                     "**Evaluation protocol**\n\n"
                     "Unseen official test sessions; frozen at commit `6a0613b`.\n\n"
                     "**Release**\n\n"

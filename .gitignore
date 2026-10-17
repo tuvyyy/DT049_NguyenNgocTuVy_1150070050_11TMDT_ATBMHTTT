@@ -27,3 +27,6 @@ models/v2_dnn/*
 # File tạm
 results/logs/
 results/v2_dnn/*.log
+
+# Interactive GRU runs are isolated from the official research artifacts.
+runs/gru/

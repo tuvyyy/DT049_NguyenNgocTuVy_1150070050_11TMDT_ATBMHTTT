@@ -3,8 +3,8 @@
 DT049 — Multivariate Time-Series Anomaly Detection on HAI 21.03
 ==============================================================
 Official Streamlit Demonstration Dashboard for DT049.
-Displays frozen official test results, post-test error analyses,
-and post-hoc Dynamic57 ablation without retraining or re-running inference.
+Official benchmark pages display frozen results and post-test analyses.
+The GRU workspace executes new jobs in isolated runs/gru folders.
 """
 
 import sys
@@ -28,6 +28,7 @@ from ui_utils import (
 from overview import render_overview
 from sidebar import render_sidebar
 from dnn_v2 import render_dnn_v2
+from gru_presentation import render_gru_presentation
 
 # Configure Streamlit page layout and appearance
 st.set_page_config(
@@ -63,7 +64,15 @@ if page not in ("Overview", "DNN Replication V2"):
 # 1. OVERVIEW
 # =============================================================================
 if page == "Overview":
-    render_overview()
+    with st.container(key="overview_mode_bar"):
+        overview_mode = st.radio(
+            "Chế độ xem", ["Thực hiện GRU", "Tổng quan nghiên cứu"],
+            horizontal=True, label_visibility="collapsed", key="overview_mode",
+        )
+    if overview_mode == "Thực hiện GRU":
+        render_gru_presentation()
+    else:
+        render_overview()
 
 
 # =============================================================================

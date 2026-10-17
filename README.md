@@ -352,7 +352,7 @@ Sau khi khởi chạy, mở trình duyệt bên trong Kali tại địa chỉ:
 *(Để kiểm tra sức khỏe sản phẩm độc lập: `./demo/check_product.py` | Để dừng server: `./demo/stop_dashboard.sh`)*
 
 > [!NOTE]
-> Dashboard hoạt động ở chế độ chỉ đọc (read-only) sử dụng các tệp kết quả đã đóng băng trên đĩa; ứng dụng hoàn toàn không chạy lại suy luận mô hình, không tính lại tập test và chỉ tiêu thụ ~61.4 MB RAM.
+> Các trang benchmark đọc kết quả chính thức đã đóng băng. Riêng **Overview → Thực hiện GRU** cho phép chọn dữ liệu, huấn luyện và đánh giá thật; mỗi lần chạy ghi vào `runs/gru/<id>/`, không ghi đè kết quả/checkpoint chính thức. Chế độ nhanh giới hạn 10.000 dòng mỗi phiên train/validation và giữ đầy đủ phiên test được chọn; kết quả của lần chạy mới không đại diện cho benchmark 40/50. Xem [hướng dẫn thao tác GRU](docs/gru_presentation_guide.md).
 
 ---
 
