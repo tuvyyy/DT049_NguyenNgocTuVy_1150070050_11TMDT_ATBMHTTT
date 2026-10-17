@@ -44,22 +44,24 @@ def render_sidebar():
         st.markdown(
             '<div class="sb-brand"><div class="sb-monogram" aria-hidden="true">dt<span>.</span></div>'
             '<div><div class="sb-brand-name">DT049</div>'
-            '<div class="sb-brand-subtitle">Industrial security research</div></div></div>',
+            '<div class="sb-brand-subtitle">Nghiên cứu an toàn ICS</div></div></div>',
             unsafe_allow_html=True,
         )
         with st.container(key="sidebar_nav"):
             for group, items in navigation:
-                st.markdown(f'<div class="sb-group-label">{group}</div>', unsafe_allow_html=True)
-                for page, key, icon in items:
-                    st.button(
-                        page,
-                        key=f"nav_{key}",
-                        icon=f":material/{icon}:",
-                        type="primary" if current == page else "secondary",
-                        width="stretch",
-                        on_click=_select_page,
-                        args=(page,),
-                    )
+                with st.container(key=f"sidebar_group_{group.lower()}"):
+                    label = {"Workspace": "Kết quả & phân tích", "Experiments": "Thử nghiệm", "Project": "Dự án"}[group]
+                    st.markdown(f'<div class="sb-group-label">{label}</div>', unsafe_allow_html=True)
+                    for page, key, icon in items:
+                        st.button(
+                            page,
+                            key=f"nav_{key}",
+                            icon=f":material/{icon}:",
+                            type="primary" if current == page else "secondary",
+                            width="stretch",
+                            on_click=_select_page,
+                            args=(page,),
+                        )
 
         with st.container(key="sidebar_about"):
             st.markdown(

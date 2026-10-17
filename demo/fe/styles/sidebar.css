@@ -5,33 +5,34 @@
     border-right: 1px solid #2b414b;
     color-scheme: dark;
 }
-[data-testid="stSidebarUserContent"] { padding: 1.9rem 1.25rem 1.5rem; }
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0; }
+[data-testid="stSidebarUserContent"] { padding: 1.25rem 1rem 1.5rem !important; }
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 8px; }
 [data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button { color: #9bafb9; }
 [data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover { color: #fff; background: #ffffff08; }
-.sb-brand { display: flex; align-items: center; gap: 12px; padding: 4px 10px 30px; }
+.sb-brand { display: flex; align-items: center; gap: 14px; padding: 8px 10px 24px; }
 .sb-monogram {
-    width: 39px; height: 39px; flex: 0 0 39px; border: 1px solid #667981;
+    width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid #667981;
     border-radius: 9px; display: flex; align-items: center; justify-content: center;
     color: #f0ede4; font-size: 21px; font-weight: 650; letter-spacing: -1.5px;
 }
 .sb-monogram span { color: #94b8a8; }
-.sb-brand-name { font-size: 19px; font-weight: 650; letter-spacing: -.6px; color: #f0f3f4; line-height: 1.25; }
-.sb-brand-subtitle { font-size: 10px; color: #9dafb8; line-height: 1.6; margin-top: 3px; }
-.sb-group-label { padding: 0 12px; margin: 24px 0 10px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: #94a7b1; }
-.st-key-sidebar_nav > [data-testid="stElementContainer"]:first-child .sb-group-label { margin-top: 0; }
-.st-key-sidebar_nav [data-testid="stButton"] { margin: 2px 0; }
+.sb-brand-name { font-size: 23px; font-weight: 650; letter-spacing: -.6px; color: #f0f3f4; line-height: 1.25; }
+.sb-brand-subtitle { font-size: 13px; color: #aebfc7; line-height: 1.5; margin-top: 4px; }
+.sb-group-label { padding: 4px 12px 10px; margin: 0; font-size: 12px; letter-spacing: 1.1px; text-transform: uppercase; font-weight: 600; color: #a9bdc7; }
+.st-key-sidebar_nav [class*="st-key-sidebar_group_"] { margin-bottom: 18px; }
+.st-key-sidebar_nav [data-testid="stVerticalBlock"] { gap: 6px; }
+.st-key-sidebar_nav [data-testid="stButton"] { margin: 0; }
 .st-key-sidebar_nav [data-testid="stButton"] button {
-    display: flex; justify-content: flex-start; gap: 11px; min-height: 42px;
-    padding: 9px 12px; border: 1px solid transparent; border-left: 2px solid transparent;
+    display: flex; justify-content: flex-start; gap: 12px; min-height: 48px;
+    padding: 11px 12px; border: 1px solid transparent; border-left: 3px solid transparent;
     border-radius: 6px; color: #c3d0d7; background: transparent; box-shadow: none;
     transition: background-color 120ms ease, color 120ms ease;
 }
-.st-key-sidebar_nav [data-testid="stButton"] button p { color: inherit; font-size: 13px; font-weight: 400; line-height: 1.45; text-align: left; }
+.st-key-sidebar_nav [data-testid="stButton"] button p { color: inherit; font-size: 17px; font-weight: 450; line-height: 1.35; text-align: left; }
 .st-key-sidebar_nav [data-testid="stButton"] button > div { justify-content: flex-start; }
 .st-key-sidebar_nav [data-testid="stButton"] button > div > span { justify-content: flex-start; gap: 11px; }
 .st-key-sidebar_nav [data-testid="stButton"] button [data-testid="stIconMaterial"] {
-    color: #9eb0ba; font-size: 19px; font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    color: #adc2cd; font-size: 23px; font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
 }
 .st-key-sidebar_nav [data-testid="stButton"] button:hover { background: #ffffff06; color: #f2f5f6; border-color: transparent; }
 .st-key-sidebar_nav [data-testid="stButton"] button[kind="primary"] {
@@ -40,82 +41,21 @@
 .st-key-sidebar_nav [data-testid="stButton"] button[kind="primary"] p { font-weight: 550; }
 .st-key-sidebar_nav [data-testid="stButton"] button[kind="primary"] [data-testid="stIconMaterial"] { color: #b9d5c9; }
 .st-key-sidebar_nav [data-testid="stButton"] button:focus-visible { outline: 2px solid #b4cdbf; outline-offset: 3px; }
-.st-key-sidebar_about { margin-top: 34px; padding: 20px 12px 0; border-top: 1px solid #334953; }
-.sb-dataset { display: flex; align-items: center; justify-content: space-between; color: #d9e3e7; font-size: 12px; font-weight: 550; }
-.sb-version { color: #9aafb9; font-size: 10px; font-weight: 400; }
-.sb-dataset-note { display: flex; align-items: center; gap: 7px; color: #9fb4be; font-size: 11px; margin: 8px 0 17px; }
+.st-key-sidebar_about { margin-top: 10px; padding: 20px 12px 0; border-top: 1px solid #334953; }
+.sb-dataset { display: flex; align-items: center; justify-content: space-between; color: #d9e3e7; font-size: 15px; font-weight: 550; }
+.sb-version { color: #b0c0c8; font-size: 13px; font-weight: 400; }
+.sb-dataset-note { display: flex; align-items: center; gap: 7px; color: #b0c0c8; font-size: 13px; margin: 10px 0 12px; }
 .sb-dataset-note i { width: 5px; height: 5px; border-radius: 50%; background: #a6beaf; }
 .st-key-sidebar_about [data-testid="stExpander"] { border: 0; background: transparent; border-radius: 0; color: #9fb4be; }
 .st-key-sidebar_about [data-testid="stExpander"] details { border: 0; background: transparent; border-radius: 0; }
 .st-key-sidebar_about [data-testid="stExpander"] summary { padding: 6px 0; }
-.st-key-sidebar_about [data-testid="stExpander"] summary p { font-size: 11px; color: #9fb4be; font-weight: 400; }
+.st-key-sidebar_about [data-testid="stExpander"] summary p { font-size: 14px; color: #b0c0c8; font-weight: 400; }
 .st-key-sidebar_about [data-testid="stExpander"] summary [data-testid="stIconMaterial"] { font-size: 15px; color: #9fb4be; }
 .st-key-sidebar_about [data-testid="stExpander"] summary:hover { color: #e8eef1; background: transparent; }
 .st-key-sidebar_about [data-testid="stExpanderDetails"] { padding: 8px 0 0; }
-.st-key-sidebar_about [data-testid="stExpanderDetails"] p { color: #aebfc7; font-size: 11px; line-height: 1.8; }
+.st-key-sidebar_about [data-testid="stExpanderDetails"] p { color: #b0c0c8; font-size: 14px; line-height: 1.7; }
 .st-key-sidebar_about [data-testid="stExpanderDetails"] strong { color: #d6e1e6; font-weight: 500; }
-.st-key-sidebar_about code { background: #223c47; color: #b8c9d1; font-size: 10px; overflow-wrap: anywhere; }
+.st-key-sidebar_about code { background: #223c47; color: #c8d6dc; font-size: 13px; overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
     .st-key-sidebar_nav [data-testid="stButton"] button { transition: none; }
 }
-
-/* ==============================================================================
-   Top Mode Switcher (Overview Mode Bar): Clean Segmented Control Tabs
-   ============================================================================== */
-.st-key-overview_mode_bar {
-    margin-bottom: 18px !important;
-}
-
-.st-key-overview_mode_bar [data-testid="stRadio"] [data-testid="stRadioGroup"] {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    gap: 6px !important;
-    background: #e2e8f0 !important;
-    padding: 5px !important;
-    border-radius: 12px !important;
-    border: 1px solid #cbd5e1 !important;
-}
-
-.st-key-overview_mode_bar [data-testid="stRadioOption"] {
-    margin: 0 !important;
-    border-radius: 8px !important;
-    padding: 9px 22px !important;
-    cursor: pointer !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    transition: all 0.15s ease !important;
-}
-
-/* Hide radio circles/dots completely in overview_mode_bar */
-.st-key-overview_mode_bar [data-testid="stRadioOption"] svg,
-.st-key-overview_mode_bar [data-testid="stRadioOption"] input,
-.st-key-overview_mode_bar [data-testid="stRadioOption"] > div > div:first-child,
-.st-key-overview_mode_bar [data-testid="stRadioOption"] label > div:first-child {
-    display: none !important;
-}
-
-.st-key-overview_mode_bar [data-testid="stRadioOption"] p,
-.st-key-overview_mode_bar [data-testid="stRadioOption"] span {
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    color: #475569 !important;
-    margin: 0 !important;
-}
-
-.st-key-overview_mode_bar [data-testid="stRadioOption"]:hover {
-    background: rgba(255, 255, 255, 0.6) !important;
-}
-
-.st-key-overview_mode_bar [data-testid="stRadioOption"][data-selected="true"],
-.st-key-overview_mode_bar [data-testid="stRadioOption"]:has(input:checked) {
-    background: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
-}
-
-.st-key-overview_mode_bar [data-testid="stRadioOption"][data-selected="true"] p,
-.st-key-overview_mode_bar [data-testid="stRadioOption"]:has(input:checked) p {
-    color: #0f172a !important;
-    font-weight: 750 !important;
-}
-

@@ -1,5 +1,7 @@
 """Frontend entry: application layout and page routing."""
 
+from pathlib import Path
+
 import streamlit as st
 
 from fe.gru_workflow import render_gru_workflow
@@ -23,19 +25,15 @@ PAGES = {
 
 
 def _benchmark_header():
-    st.title("DT049 — Multivariate Time-Series Anomaly Detection on HAI 21.03")
-    st.markdown("**Persistence • Ridge • GRU** | *Leakage-aware event detection and detection-delay analysis*")
-    columns = st.columns(5)
-    for column, text in zip(columns, ["🏷️ **Dataset:** HAI 21.03", "🔒 **Primary Threshold:** $Q_{99.9}$",
-                                      "🎯 **Attack Events:** 50", "🧠 **Primary Model:** GRU $W=30$"]):
-        column.info(text)
-    columns[4].success("✅ **Status:** Frozen Final Test")
-    st.markdown("---")
+    st.markdown('<div class="db-context"><span>DT049 / HAI 21.03 · Persistence, Ridge, GRU</span>'
+                '<span>50 sự kiện · Q99.9 · Kết quả đã lưu</span></div>', unsafe_allow_html=True)
 
 
 def run_app():
     st.set_page_config(page_title="DT049 — HAI 21.03 Anomaly Detection", page_icon="🛡️",
                        layout="wide", initial_sidebar_state="expanded")
+    css = (Path(__file__).parent / "styles/dashboard.css").read_text(encoding="utf-8")
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
     page = render_sidebar()
     if page == "Overview":
         with st.container(key="overview_mode_bar"):
@@ -50,5 +48,6 @@ def run_app():
         from dnn_v2 import render_dnn_v2
         render_dnn_v2()
     else:
-        _benchmark_header()
-        PAGES[page]()
+        with st.container(key="research_page"):
+            _benchmark_header()
+            PAGES[page]()

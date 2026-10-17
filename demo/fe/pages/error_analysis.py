@@ -14,7 +14,7 @@ def render_error_analysis():
     if proc_df is not None:
         col_pr1, col_pr2 = st.columns([1.4, 1.0])
         with col_pr1:
-            st.dataframe(proc_df, use_container_width=True, hide_index=True)
+            st.dataframe(proc_df, width="stretch", hide_index=True)
         with col_pr2:
             display_figure(
                 "results/figures/error_analysis/fig_ea_01_process_recall.png",
@@ -33,7 +33,7 @@ def render_error_analysis():
     if paired_df is not None:
         col_pd1, col_pd2 = st.columns([1.4, 1.0])
         with col_pd1:
-            st.dataframe(paired_df, use_container_width=True, hide_index=True)
+            st.dataframe(paired_df, width="stretch", hide_index=True)
         with col_pd2:
             display_figure(
                 "results/figures/error_analysis/fig_ea_02_common_delay_paired.png",
@@ -62,7 +62,7 @@ def render_error_analysis():
             "ridge_detected": "Ridge Detected",
             "persistence_detected": "Persistence Detected",
         }
-        st.dataframe(missed_df[disp_miss_cols].rename(columns=rename_miss), use_container_width=True, hide_index=True)
+        st.dataframe(missed_df[disp_miss_cols].rename(columns=rename_miss), width="stretch", hide_index=True)
 
         st.info(
             "📌 **Factual Near-Miss Observations (Score/Threshold close to 1.0):**\n"

@@ -62,12 +62,12 @@ def render_ablation():
             "normal_fa_events_per_hour": "Normal FA (ev/h)",
             "median_detection_delay_sec": "Median Delay (s)",
         }
-        st.dataframe(q999_ab[cols_show].rename(columns=rename_ab), use_container_width=True, hide_index=True)
+        st.dataframe(q999_ab[cols_show].rename(columns=rename_ab), width="stretch", hide_index=True)
 
     if ab_ms_df is not None:
         st.subheader("GRU Multi-Seed Aggregate (79 vs. 57)")
         q_ms = ab_ms_df[ab_ms_df["operating_point"] == "Q99.9"].copy()
-        st.dataframe(q_ms, use_container_width=True, hide_index=True)
+        st.dataframe(q_ms, width="stretch", hide_index=True)
 
     if ab_ch_df is not None:
         changed_count = ab_ch_df["changed_status_any_model"].sum()

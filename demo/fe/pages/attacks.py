@@ -24,10 +24,10 @@ def render_attacks():
         col_f1, col_f2, col_f3, col_f4 = st.columns(4)
         with col_f1:
             session_options = ["All"] + sorted(merged_atk["session"].unique().tolist())
-            selected_session = st.selectbox("Filter by Test File:", session_options, index=0)
+            selected_session = st.selectbox("Phiên kiểm thử", session_options, index=0, key="attack_session")
         with col_f2:
             process_options = ["All"] + sorted(merged_atk["process_set"].unique().tolist())
-            selected_process = st.selectbox("Filter by Process / Subsystem:", process_options, index=0)
+            selected_process = st.selectbox("Hệ thống con", process_options, index=0, key="attack_process")
         with col_f3:
             status_options = [
                 "All",
@@ -35,11 +35,11 @@ def render_attacks():
                 "Missed by GRU s42",
                 "Detected by All Models",
                 "Missed by All Models",
-                "Detected by Ridge Only",
+                "Ridge detected, GRU missed",
             ]
-            selected_status = st.selectbox("Filter by Detection Status:", status_options, index=0)
+            selected_status = st.selectbox("Tình trạng phát hiện", status_options, index=0, key="attack_status")
         with col_f4:
-            search_query = st.text_input("Search Attack ID (e.g. atk_02):", "").strip()
+            search_query = st.text_input("Tìm mã sự kiện", "", placeholder="Ví dụ: atk_02", key="attack_search").strip()
 
         # Apply filters
         filtered_df = merged_atk.copy()
@@ -56,11 +56,11 @@ def render_attacks():
             filtered_df = filtered_df[(filtered_df["persistence_detected"] == True) & (filtered_df["ridge_detected"] == True) & (filtered_df["gru_seed42_detected"] == True)]
         elif selected_status == "Missed by All Models":
             filtered_df = filtered_df[(filtered_df["persistence_detected"] == False) & (filtered_df["ridge_detected"] == False) & (filtered_df["gru_seed42_detected"] == False)]
-        elif selected_status == "Detected by Ridge Only":
+        elif selected_status == "Ridge detected, GRU missed":
             filtered_df = filtered_df[(filtered_df["ridge_detected"] == True) & (filtered_df["gru_seed42_detected"] == False)]
 
         if search_query:
-            filtered_df = filtered_df[filtered_df["attack_event_id"].str.contains(search_query, case=False, na=False)]
+            filtered_df = filtered_df[filtered_df["attack_event_id"].str.contains(search_query, case=False, na=False, regex=False)]
 
         st.caption(f"Showing **{len(filtered_df)}** of **{len(merged_atk)}** total attack events matching active filters.")
 
@@ -82,7 +82,7 @@ def render_attacks():
         }
         st.dataframe(
             filtered_df[preview_cols].rename(columns=rename_preview),
-            use_container_width=True,
+            width="stretch",
             hide_index=True
         )
 
@@ -92,9 +92,9 @@ def render_attacks():
         st.subheader("Attack Event Detail Panel")
         if not filtered_df.empty:
             chosen_atk_id = st.selectbox(
-                "Select Attack Event to Inspect in Detail:",
+                "Sự kiện cần xem",
                 filtered_df["attack_event_id"].tolist(),
-                index=0
+                index=0, key="attack_detail"
             )
             atk_row = merged_atk[merged_atk["attack_event_id"] == chosen_atk_id].iloc[0]
 

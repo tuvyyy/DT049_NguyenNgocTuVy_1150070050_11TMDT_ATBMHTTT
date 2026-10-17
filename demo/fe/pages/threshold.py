@@ -24,8 +24,8 @@ def render_threshold():
         sens_df = sens_df[sens_df["operating_point"].isin(valid_points)].copy()
 
         q_options = ["Q99.5 (Sensitivity Lower)", "Q99.9 — FROZEN PRIMARY", "Q99.99 (Sensitivity Upper)"]
-        q_choice = st.radio("Select Predefined Operating Point to Inspect:", q_options, index=1)
-        selected_q = "Q99.9" if "Q99.9" in q_choice else ("Q99.5" if "Q99.5" in q_choice else "Q99.99")
+        q_choice = st.radio("Select Predefined Operating Point to Inspect:", q_options, index=1, key="threshold_point")
+        selected_q = valid_points[q_options.index(q_choice)]
 
         filtered_sens = sens_df[sens_df["operating_point"] == selected_q].copy()
 
@@ -49,7 +49,7 @@ def render_threshold():
             "point_fpr": "Point FPR",
             "median_detection_delay_sec": "Median Delay (s)",
         }
-        st.dataframe(filtered_sens[disp_cols].rename(columns=disp_rename), use_container_width=True, hide_index=True)
+        st.dataframe(filtered_sens[disp_cols].rename(columns=disp_rename), width="stretch", hide_index=True)
 
     st.markdown("---")
     st.subheader("Sensitivity Tradeoff Curves")

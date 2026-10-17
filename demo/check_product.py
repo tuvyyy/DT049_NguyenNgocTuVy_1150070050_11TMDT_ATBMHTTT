@@ -27,6 +27,7 @@ DASHBOARD_SOURCES = [
     "demo/fe/styles/gru_workflow.css",
     "demo/fe/styles/overview.css",
     "demo/fe/styles/sidebar.css",
+    "demo/fe/styles/dashboard.css",
     "demo/fe/overview.py",
     "demo/fe/sidebar.py",
     "demo/fe/ui_utils.py",

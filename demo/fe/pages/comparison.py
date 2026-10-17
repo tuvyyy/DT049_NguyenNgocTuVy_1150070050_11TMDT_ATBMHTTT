@@ -21,7 +21,7 @@ def render_comparison():
             "FP alarm seconds/hour": "false_positive_alarm_seconds_per_hour",
             "Median detection delay (s)": "delay_median_sec",
         }
-        selected_metric_label = st.selectbox("Select Metric to Visualize Across Models:", list(metric_options.keys()), index=0)
+        selected_metric_label = st.selectbox("Chỉ số so sánh", list(metric_options.keys()), index=0, key="comparison_metric")
         selected_col = metric_options[selected_metric_label]
 
         # Compact bar chart
@@ -52,7 +52,7 @@ def render_comparison():
         }
         st.dataframe(
             summary_df[display_cols].rename(columns=rename_map),
-            use_container_width=True,
+            width="stretch",
             hide_index=True
         )
 

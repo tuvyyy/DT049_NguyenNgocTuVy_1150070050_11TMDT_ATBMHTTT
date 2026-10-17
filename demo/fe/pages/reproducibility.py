@@ -23,7 +23,7 @@ def render_reproducibility():
         health_table[["name", "path", "status", "size_bytes"]].rename(
             columns={"name": "Artifact", "path": "Relative Path", "status": "Status", "size_bytes": "File Size (Bytes)"}
         ),
-        use_container_width=True,
+        width="stretch",
         hide_index=True
     )
 
