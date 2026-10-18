@@ -1,26 +1,22 @@
 #!/usr/bin/env python3
-"""Read-only terminal demo for the saved quick run and test1_atk_02.
-
-No training, threshold fitting, artifact writes, or benchmark substitution.
-The constants below are the user's expected values, never displayed as measurements.
-"""
+"""Terminal demo: read saved logs/results or recompute one event, without training."""
 
 import argparse
 import csv
 import hashlib
 import json
+import math
+import os
 from pathlib import Path
+import pickle
 import re
 import shutil
+import statistics
 import sys
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_RUN = ROOT / "runs/gru/20261018T114814_2e1846de"
 EVENT = "test1_atk_02"
-START = "2020-07-07 17:28:11"
-END = "2020-07-07 17:29:48"
-FIRST = "2020-07-07 17:28:29"
 
 
 class DemoError(ValueError):
@@ -44,75 +40,135 @@ def read_csv(path):
 
 def expect(name, actual, expected, digits=None):
     if digits is not None:
-        actual = f"{float(actual):.{digits}f}"
-        expected = f"{float(expected):.{digits}f}"
+        actual, expected = (f"{float(value):.{digits}f}" for value in (actual, expected))
     if actual != expected:
-        raise DemoError(f"{name}: đọc được {actual!r}; số ní yêu cầu {expected!r}. Không chỉnh số cho khớp.")
+        raise DemoError(f"{name}: giá trị đọc được {actual!r}, giá trị đối chiếu {expected!r}. Các nguồn không khớp.")
+
+
+def number(value, name, integer=False):
+    if isinstance(value, bool):
+        raise DemoError(f"{name}: cần một số, không phải giá trị đúng/sai.")
+    result = float(value)
+    if not math.isfinite(result) or result < 0 or (integer and not result.is_integer()):
+        raise DemoError(f"{name}: cần số {'nguyên ' if integer else ''}hữu hạn không âm.")
+    return int(result) if integer else result
+
+
+def close(name, actual, expected):
+    if expected is None:
+        expect(name, actual, None)
+    elif not math.isclose(number(actual, name), expected, rel_tol=1e-8, abs_tol=1e-9):
+        raise DemoError(f"{name}: artifact ghi {actual}, tính từ các trường đã lưu là {expected}.")
+
+
+def digest(path):
+    return hashlib.sha256(require(path).read_bytes()).hexdigest()
 
 
 def load_run(path):
-    settings = read_json(path / "settings.json")
-    trained = read_json(path / "training.json")
-    result = read_json(path / "evaluation.json")
-    checkpoint = require(path / "gru.pt")
-    digest = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
-    expect("SHA256 checkpoint/training", digest, trained["checkpoint_sha256"])
-    expect("SHA256 checkpoint/evaluation", digest, result["checkpoint_sha256"])
-    expect("Chế độ", trained["profile"], "quick")
-    expect("Giới hạn dòng học mỗi phiên", settings["row_limit"], 10000)
-    expect("Số epoch cấu hình", settings["epochs"], 3)
-    expect("Số epoch đã chạy", trained["total_epochs"], 3)
-    expect("Ngưỡng training", trained["threshold"], 1.605896, 6)
-    expect("Ngưỡng evaluation", result["threshold"], trained["threshold"])
-    expect("Seed training/evaluation", result["seed"], settings["seed"])
-    expect("Phiên đánh giá", result["sessions"], ["test1"])
-    expect("Số sự kiện khớp nhãn", result["tp"], 5)
-    expect("Số sự kiện bỏ sót", result["fn"], 0)
-    expect("Event F1", result["event_f1"], .144928, 6)
-    expect("Normal FA/h", result["normal_fa_events_per_hour"], 4.9081, 4)
-    expect("Median Delay", result["median_delay_sec"], 18)
-    events = [row for row in read_csv(path / "attack_events.csv") if row["attack_event_id"] == EVENT]
-    if len(events) != 1:
-        raise DemoError(f"Cần đúng một hàng {EVENT}; tìm thấy {len(events)}.")
-    event = events[0]
-    expect("Phiên của sự kiện", event["session"], "test1")
-    expect("Bắt đầu", event["orig_start"], START)
-    expect("Kết thúc", event["orig_end"], END)
-    expect("Trạng thái khớp nhãn", event["detected"].lower(), "true")
-    expect("Delay đã lưu", float(event["delay_seconds"]), 18)
-
-    # Print compact excerpts of the actual saved log, checked against its CSV.
-    history = read_csv(path / "training_history.csv")
-    log_text = require(path / "train.log").read_text(encoding="utf-8")
-    logs = re.findall(r"Epoch\s+(\d+)/(\d+)\s*\|\s*Train Loss:\s*([0-9.eE+-]+)", log_text)
-    expect("Số dòng epoch trong log", len(logs), 3)
-    expect("Số dòng history", len(history), 3)
-    for number, ((epoch, maximum, loss), row) in enumerate(zip(logs, history), 1):
-        expect("Epoch trong log", (int(epoch), int(maximum)), (number, 3))
-        expect("Epoch history", int(row["epoch"]), number)
-        expect("Loss log/history", float(loss), float(row["train_loss_mse"]), 6)
-    if not float(logs[-1][2]) < float(logs[0][2]):
-        raise DemoError("Loss lượt cuối không thấp hơn lượt đầu; không thể nói loss đã giảm.")
-    return dict(path=path, settings=settings, trained=trained, result=result, event=event, logs=logs)
+    """Read metadata and verify checkpoint bytes; do not load a model or infer."""
+    settings, trained = (read_json(path / name) for name in ("settings.json", "training.json"))
+    checksum = digest(path / "gru.pt")
+    expect("SHA-256 checkpoint/training.json", checksum, trained["checkpoint_sha256"])
+    seed = number(settings["seed"], "Seed", integer=True)
+    expect("Seed training/settings", trained["seed"], seed)
+    limit = number(settings["row_limit"], "Giới hạn dòng", integer=True)
+    if limit not in (0, 10000):
+        raise DemoError("Giới hạn dòng không thuộc cấu hình hiện có: 0 hoặc 10000.")
+    expect("Chế độ training/settings", trained["profile"], "quick" if limit else "full")
+    maximum = number(settings["epochs"], "Số epoch cấu hình", integer=True)
+    total = number(trained["total_epochs"], "Số epoch đã chạy", integer=True)
+    best = number(trained["best_epoch"], "Epoch checkpoint", integer=True)
+    if not 1 <= best <= total <= maximum:
+        raise DemoError("Epoch checkpoint, số epoch đã chạy và cấu hình không nhất quán.")
+    expect("Cửa sổ training", trained["window_size"], 30)
+    number(trained["threshold"], "Ngưỡng của lần chạy")
+    return dict(path=path, settings=settings, trained=trained, checksum=checksum)
 
 
-def score_window(checkpoint, features):
-    """Same model, W=30 and float64 RMSE calculation as score_gru in src/."""
+def load_log(run):
+    """Validate actual saved epoch lines against CSV and training metadata."""
+    history = read_csv(run["path"] / "training_history.csv")
+    text = require(run["path"] / "train.log").read_text(encoding="utf-8")
+    logs = re.findall(r"Epoch\s+(\d+)/(\d+)\s*\|\s*Train Loss:\s*([0-9.eE+-]+)", text)
+    total = run["trained"]["total_epochs"]
+    expect("Số dòng epoch trong log", len(logs), total)
+    expect("Số dòng history CSV", len(history), total)
+    expect("Số dòng history JSON", len(run["trained"]["history"]), total)
+    for index, ((epoch, maximum, loss), row, recorded) in enumerate(zip(logs, history, run["trained"]["history"]), 1):
+        expect("Epoch trong log", (int(epoch), int(maximum)), (index, run["settings"]["epochs"]))
+        expect("Epoch trong CSV", int(row["epoch"]), index)
+        expect("Epoch trong JSON", recorded["epoch"], index)
+        number(loss, "Train Loss")
+        expect("Loss log/CSV", float(loss), float(row["train_loss_mse"]), 6)
+        expect("Loss log/JSON", float(loss), float(recorded["train_loss_mse"]), 6)
+    run["logs"] = logs
+
+
+def load_result(run, event_id=EVENT):
+    """Check saved evaluation, its checkpoint/threshold, counts and event rows."""
+    result = read_json(run["path"] / "evaluation.json")
+    expect("SHA-256 evaluation/checkpoint", result["checkpoint_sha256"], run["checksum"])
+    expect("Ngưỡng evaluation/training", result["threshold"], run["trained"]["threshold"])
+    expect("Seed evaluation/settings", result["seed"], run["settings"]["seed"])
+    sessions = result["sessions"]
+    if not sessions or len(set(sessions)) != len(sessions) or not set(sessions) <= {f"test{i}" for i in range(1, 6)}:
+        raise DemoError("Danh sách phiên đánh giá không hợp lệ.")
+    events = read_csv(run["path"] / "attack_events.csv")
+    if len({row["attack_event_id"] for row in events}) != len(events):
+        raise DemoError("Bảng sự kiện có mã trùng lặp.")
+    for row in events:
+        if row["session"] not in sessions or not row["attack_event_id"].startswith(row["session"] + "_atk_"):
+            raise DemoError("Mã sự kiện hoặc phiên không khớp bảng đánh giá.")
+        value = row["detected"].lower()
+        if value not in ("true", "false"):
+            raise DemoError("Trạng thái sự kiện phải là True hoặc False.")
+        row["is_detected"] = value == "true"
+        if row["is_detected"]:
+            number(row["delay_seconds"], "Độ trễ đã lưu", integer=True)
+        elif row["delay_seconds"].strip() not in ("", "nan"):
+            raise DemoError("Sự kiện không khớp nhãn phải có độ trễ bỏ trống, không gán 0.")
+    tp, fn, fp, alarms, normal_fa, normal_samples = (
+        number(result[key], key, integer=True) for key in ("tp", "fn", "fp", "alarms", "normal_fa", "normal_samples"))
+    expect("TP/bảng sự kiện", tp, sum(row["is_detected"] for row in events))
+    expect("FN/bảng sự kiện", fn, len(events) - tp)
+    expect("Số cảnh báo/TP+FP", alarms, tp + fp)
+    per_session = read_csv(run["path"] / "per_session.csv")
+    expect("Các phiên trong per_session.csv", sorted(row["session"] for row in per_session), sorted(sessions))
+    for key in ("tp", "fn", "fp", "alarms", "normal_fa", "normal_samples"):
+        expect(f"Tổng {key}/per_session.csv", result[key], sum(number(row[key], key, integer=True) for row in per_session))
+    for row in per_session:
+        subset = [event for event in events if event["session"] == row["session"]]
+        expect("TP theo phiên", int(row["tp"]), sum(event["is_detected"] for event in subset))
+        expect("FN theo phiên", int(row["fn"]), len(subset) - int(row["tp"]))
+    precision, recall = (tp / (tp + fp) if tp + fp else 0), (tp / (tp + fn) if tp + fn else 0)
+    close("Event Precision", result["event_precision"], precision)
+    close("Event Recall", result["event_recall"], recall)
+    close("Event F1", result["event_f1"], 2 * precision * recall / (precision + recall) if precision + recall else 0)
+    close("Normal FA/h", result["normal_fa_events_per_hour"], normal_fa / (normal_samples / 3600) if normal_samples else None)
+    delays = [float(row["delay_seconds"]) for row in events if row["is_detected"]]
+    close("Median Delay", result["median_delay_sec"], statistics.median(delays) if delays else None)
+    run.update(result=result, events=events, event_id=event_id)
+
+
+def score_window(checkpoint, features, expected=None):
+    """Same W=30 model and float64 RMSE calculation as score_gru in src/."""
     import numpy as np
     import torch
     from torch.utils.data import DataLoader
     sys.path.insert(0, str(ROOT / "src"))
     from gru_dataset import SessionWindowDataset
     from gru_model import OneStepGRU
-
-    torch.set_num_threads(min(4, __import__("os").cpu_count() or 1))
+    torch.set_num_threads(min(4, os.cpu_count() or 1))
     saved = torch.load(checkpoint, map_location="cpu", weights_only=True)
     expect("Cửa sổ checkpoint", saved["window_size"], 30)
+    if expected is not None:
+        expect("Seed checkpoint/training", saved["seed"], expected["seed"])
+        expect("Epoch checkpoint/training", saved["epoch"], expected["best_epoch"])
     model = OneStepGRU()
     model.load_state_dict(saved["model_state_dict"])
     model.eval()
-    loader = DataLoader(SessionWindowDataset([features], window_size=30, stride=1),
-                        batch_size=512, shuffle=False, num_workers=0)
+    loader = DataLoader(SessionWindowDataset([features], window_size=30, stride=1), batch_size=512, shuffle=False, num_workers=0)
     parts = []
     with torch.no_grad():
         for inputs, targets in loader:
@@ -124,9 +180,17 @@ def score_window(checkpoint, features):
 
 def inspect_event(run):
     import numpy as np
-    path = run["path"]
+    event_id, path = run["event_id"], run["path"]
+    match = re.fullmatch(r"(test[1-5])_atk_(\d{2,})", event_id)
+    if not match or int(match[2]) < 1:
+        raise DemoError("Mã sự kiện không hợp lệ; ví dụ test1_atk_02.")
+    session, ordinal = match[1], int(match[2])
+    rows = [row for row in run["events"] if row["attack_event_id"] == event_id]
+    if len(rows) != 1:
+        raise DemoError(f"Không tìm thấy sự kiện {event_id} trong kết quả của run đã chọn.")
+    event = rows[0]
     manifest = read_json(path / "data_manifest.json")
-    files = manifest["test1"]["files"]
+    files = manifest[session]["files"]
     arrays = {}
     for name in ("features", "timestamps", "attack"):
         location = Path(files[name])
@@ -135,124 +199,137 @@ def inspect_event(run):
         arrays[name] = np.load(require(location), mmap_mode="r", allow_pickle=False)
     features, times, labels = (arrays[name] for name in ("features", "timestamps", "attack"))
     if features.ndim != 2 or features.shape[1] != 79 or features.dtype != np.float32:
-        raise DemoError("Test1 cần features float32 có 79 cột, giống đầu vào của lần chạy.")
-    if len(features) != len(times) or len(labels) != len(times):
-        raise DemoError("Số dòng features, timestamps và attack không khớp.")
+        raise DemoError(f"{session}: cần features float32 có 79 cột.")
+    expect("Số dòng features/timestamps", len(features), len(times))
+    expect("Số dòng nhãn/timestamps", len(labels), len(times))
+    expect("Số dòng manifest/dữ liệu", manifest[session]["rows"], len(times))
+    expect("Dữ liệu kiểm thử giữ đầy đủ", manifest[session]["used_rows"], len(times))
     if not np.issubdtype(times.dtype, np.datetime64) or np.isnat(times).any():
         raise DemoError("Timestamp không hợp lệ.")
     if not np.all(np.diff(times) == np.timedelta64(1, "s")) or not np.isin(labels, [0, 1]).all():
-        raise DemoError("Test1 phải liên tục mỗi giây và nhãn phải là 0/1.")
+        raise DemoError("Phiên kiểm thử phải liên tục mỗi giây và nhãn phải là 0/1.")
     edges = np.diff(np.pad(np.asarray(labels, dtype=np.int8), (1, 1)))
     starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1) - 1
-    if len(starts) < 2:
-        raise DemoError("Không có sự kiện thứ hai trong nhãn test1.")
-    start, end = times[starts[1]], times[ends[1]]
-    expect("Bắt đầu trong nhãn test1", str(start.astype("datetime64[s]")).replace("T", " "), START)
-    expect("Kết thúc trong nhãn test1", str(end.astype("datetime64[s]")).replace("T", " "), END)
-    first_target = int(np.searchsorted(times, start - np.timedelta64(10, "s")))
-    last_target = int(np.searchsorted(times, end + np.timedelta64(10, "s")))
-    if first_target < 30 or last_target >= len(times):
-        raise DemoError("Thiếu dữ liệu ngữ cảnh trước/sau sự kiện.")
+    if ordinal > len(starts):
+        raise DemoError(f"Không có {event_id} trong nhãn HAI của {session}.")
+    start_index, end_index = int(starts[ordinal - 1]), int(ends[ordinal - 1])
+    start, end = times[start_index], times[end_index]
+    for field, measured in (("orig_start", start), ("orig_end", end)):
+        expect(f"{field}: CSV/nhãn HAI", np.datetime64(event[field]), measured)
+    if end_index < 30:
+        raise DemoError("Sự kiện nằm trước mốc đánh giá chung W=30.")
+    first_target, last_target = max(30, start_index - 10), min(len(times) - 1, end_index + 10)
     window = features[first_target - 30:last_target + 1]
     if not np.isfinite(window).all():
         raise DemoError("Features quanh sự kiện chứa NaN hoặc Inf.")
-    scores = score_window(path / "gru.pt", window)
+    scores = score_window(path / "gru.pt", window, expected=run["trained"])
+    expect("SHA-256 checkpoint sau suy luận", digest(path / "gru.pt"), run["checksum"])
     targets = np.asarray(times[first_target:last_target + 1])
+    if not np.isfinite(scores).all() or len(scores) != len(targets):
+        raise DemoError("RMSE tính lại không hữu hạn hoặc lệch số dòng.")
     inside = (targets >= start) & (targets <= end)
     threshold = run["trained"]["threshold"]
     alarms = np.flatnonzero(inside & (scores > threshold))
-    if len(alarms) == 0:
-        raise DemoError("Checkpoint không cho sai số vượt ngưỡng trong sự kiện; trái với kết quả đã lưu.")
-    first = targets[alarms[0]]
-    expect("Cảnh báo đầu tiên tính lại", str(first.astype("datetime64[s]")).replace("T", " "), FIRST)
-    delay = float((first - start) / np.timedelta64(1, "s"))
-    expect("Độ trễ tính lại", delay, float(run["event"]["delay_seconds"]))
-
-    # Also cross-check saved scores if present; never use them as an inference substitute.
-    stored = path / "scores_test1.npz"
+    first = targets[alarms[0]] if len(alarms) else None
+    if bool(len(alarms)) != event["is_detected"]:
+        raise DemoError("Trạng thái vượt ngưỡng tính lại khác kết quả ghép sự kiện đã lưu. Cần kiểm tra ghép 1–1 trên toàn phiên; không kết luận thành công.")
+    delay = float((first - times[max(30, start_index)]) / np.timedelta64(1, "s")) if first is not None else None
+    if first is not None:
+        close("Độ trễ tính lại/CSV", float(event["delay_seconds"]), delay)
+    stored = path / f"scores_{session}.npz"
     if stored.is_file():
         with np.load(stored, allow_pickle=False) as cached:
             indices = np.searchsorted(cached["timestamps"], targets)
             if np.any(indices >= len(cached["timestamps"])) or not np.array_equal(cached["timestamps"][indices], targets):
-                raise DemoError("Mốc giờ scores_test1.npz không khớp dữ liệu test1.")
+                raise DemoError("Timestamp của scores đã lưu không khớp dữ liệu.")
             if not np.allclose(scores, cached["scores"][indices], rtol=1e-5, atol=1e-6):
-                raise DemoError("RMSE tính lại không khớp scores_test1.npz trong sai số số học cho phép.")
-    return dict(times=targets, scores=scores, inside=inside, first=first,
+                raise DemoError("RMSE tính lại không khớp scores đã lưu trong sai số số học cho phép.")
+            if not np.array_equal(scores > threshold, cached["scores"][indices] > threshold):
+                raise DemoError("Quyết định vượt ngưỡng khác scores đã lưu.")
+            if "attack" in cached and not np.array_equal(cached["attack"][indices], labels[first_target:last_target + 1]):
+                raise DemoError("Nhãn trong scores đã lưu không khớp nhãn dữ liệu.")
+    run["event"] = event
+    return dict(times=targets, scores=scores, inside=inside, first=first, start=start, end=end,
                 peak=float(np.max(scores[inside])), threshold=threshold, delay=delay)
 
 
-def show_log(run):
-    log_text = require(run["path"] / "train.log").read_text(encoding="utf-8")
-    for line in log_text.splitlines():
-        if "Epoch" in line:
-            print(line.strip())
-    print(f"Ngưỡng tau: {run['trained']['threshold']:.6f}")
+def show_log(run, detail=False):
+    logs = run["logs"]
+    print(f"ĐỌC LOG ĐÃ LƯU | seed {run['settings']['seed']} | {len(logs)} epoch")
+    chosen = logs if detail or len(logs) <= 3 else [logs[i] for i in sorted({0, run['trained']['best_epoch'] - 1, len(logs) - 1})]
+    for epoch, maximum, loss in chosen:
+        print(f"Epoch {epoch}/{maximum} | Train Loss: {float(loss):.6f}")
+    print(f"Checkpoint đã lưu: gru.pt (epoch {run['trained']['best_epoch']}); SHA-256 khớp.")
+    if len(chosen) != len(logs): print(f"Đang trích {len(chosen)}/{len(logs)} epoch; dùng --detail để xem đủ.")
+    if detail: print(f"Run: {run['path']} | tau: {run['trained']['threshold']:.6f}")
 
 
-def show_result(run):
+def show_result(run, detail=False):
     result = run["result"]
-    print("Kết quả test1:")
-    print(f"Khớp nhãn: {result['tp']}/{result['tp'] + result['fn']} | Event F1: {result['event_f1']:.6f}")
-    print(f"Normal FA/h: {result['normal_fa_events_per_hour']:.4f} | Median Delay: {result['median_delay_sec']:g} giây")
+    print(f"ĐỌC KẾT QUẢ ĐÃ LƯU | {', '.join(result['sessions'])}")
+    print(f"Cảnh báo khớp nhãn: {result['tp']}/{result['tp'] + result['fn']} sự kiện | Bỏ sót: {result['fn']}")
+    if detail:
+        delay, rate = result['median_delay_sec'], result['normal_fa_events_per_hour']
+        print(f"Event F1: {result['event_f1']:.6f} | Normal FA/h: {rate:.4f}" if rate is not None else f"Event F1: {result['event_f1']:.6f} | Normal FA/h: N/A")
+        print(f"Median Delay: {delay:g} giây" if delay is not None else "Median Delay: N/A")
+        print(f"Ngưỡng của run: {result['threshold']:.6f}")
 
 
-def show_event(run, measured):
-    print(f"Sự kiện {EVENT}:")
-    print(f"Bắt đầu: {run['event']['orig_start']}")
-    print(f"Cảnh báo: {str(measured['first'].astype('datetime64[s]')).replace('T', ' ')} | trễ {measured['delay']:g} giây")
-    print(f"Kết thúc: {run['event']['orig_end']}")
-    print(f"tau = {measured['threshold']:.6f} | Đỉnh RMSE = {measured['peak']:.6f}")
+def show_event(run, measured, detail=False):
+    print(f"TÍNH LẠI BẰNG CHECKPOINT | {run['event_id']}")
+    print(f"Bắt đầu theo nhãn HAI: {run['event']['orig_start']}")
+    if measured['first'] is None:
+        print("Cảnh báo trong vùng nhãn: không có | Độ trễ: không áp dụng")
+        print("Kết luận: không khớp sự kiện nhãn HAI.")
+    else:
+        print(f"Cảnh báo đầu trong vùng nhãn: {str(measured['first'].astype('datetime64[s]')).replace('T', ' ')}")
+        print(f"Độ trễ: {measured['delay']:g} giây | Kết luận: sai số bất thường khớp nhãn HAI.")
+    if detail:
+        print(f"Kết thúc theo nhãn: {run['event']['orig_end']}")
+        print(f"tau: {measured['threshold']:.6f} | Đỉnh RMSE trong vùng nhãn: {measured['peak']:.6f}")
+        print("Đầu vào GRU chỉ có 79 tín hiệu; nhãn chỉ dùng đối chiếu sau suy luận.")
 
 
 def show_timeline(measured):
     import numpy as np
     scores, threshold = measured["scores"], measured["threshold"]
-    top = max(float(np.max(scores)), threshold * 1.1)
+    top = max(float(np.max(scores)), threshold * 1.1, 1e-9)
     levels = [top, (top + threshold) / 2, threshold, threshold / 2, 0]
     width = max(12, min(60, shutil.get_terminal_size((96, 30)).columns - 12))
     print("1 cột = 1 giây | * RMSE (phân mức); ! cảnh báo đầu; [=] nhãn tấn công")
     print(f"Vạch ngang tau = {threshold:.6f} (* tại hàng tau chỉ thể hiện mức gần ngưỡng)")
     for offset in range(0, len(scores), width):
-        part = scores[offset:offset + width]
-        times = measured["times"][offset:offset + width]
-        inside = measured["inside"][offset:offset + width]
+        part, times = scores[offset:offset + width], measured["times"][offset:offset + width]
         rows = [["-" if row == 2 else " " for _ in part] for row in range(5)]
         for column, value in enumerate(part):
-            # Keep every above-threshold sample strictly above the threshold row.
-            if value > threshold:
-                row = 0 if value > (top + threshold) / 2 else 1
-            else:
-                row = 2 + int(np.argmin(np.abs(np.asarray(levels[2:]) - value)))
-            rows[row][column] = "!" if times[column] == measured["first"] else "*"
+            row = (0 if value > (top + threshold) / 2 else 1) if value > threshold else 2 + int(np.argmin(np.abs(np.asarray(levels[2:]) - value)))
+            rows[row][column] = "!" if measured["first"] is not None and times[column] == measured["first"] else "*"
         print(f"\n{str(times[0])[11:19]} -> {str(times[-1])[11:19]}")
         for row, level in enumerate(levels):
             label = f"tau {level:.3f}" if row == 2 else f"{level:.3f}"
             print(f"{label:>10}|{''.join(rows[row])}")
-        marks = ["=" if value else "." for value in inside]
+        marks = ["=" if value else "." for value in measured["inside"][offset:offset + width]]
         for column, time in enumerate(times):
-            if time == np.datetime64(START): marks[column] = "["
-            if time == np.datetime64(END): marks[column] = "]"
+            if time == measured["start"]: marks[column] = "["
+            if time == measured["end"]: marks[column] = "]"
         print(f"{'Nhãn':>10}|{''.join(marks)}")
 
 
 def auxiliary(mode):
     if mode == "seeds":
-        source = ROOT / "results/metrics/final_test_summary.csv"
-        rows = [r for r in read_csv(source) if r["model_id"] in ("gru_seed42", "gru_seed43", "gru_seed44")]
-        if len(rows) != 3:
-            raise DemoError("CSV tổng hợp không đủ ba seed GRU.")
+        rows = [r for r in read_csv(ROOT / "results/metrics/final_test_summary.csv") if r["model_id"] in ("gru_seed42", "gru_seed43", "gru_seed44")]
+        expect("Số seed trong benchmark", len(rows), 3)
         print("Benchmark (test1–test5):")
         for row in rows:
             print(f"{row['model_id']}: khớp {row['tp_detected']}/{row['evaluable_attacks']} | F1 {float(row['event_f1']):.6f} | FA/h {float(row['normal_fa_events_per_hour']):.4f}")
     elif mode == "benchmark-log":
-        path = require(ROOT / "results/logs/train_gru.log")
         from collections import deque
-        print(f"12 dòng cuối {path.relative_to(ROOT)}:")
+        path = require(ROOT / "results/logs/train_gru.log")
+        print(f"12 dòng cuối log đã lưu {path.relative_to(ROOT)}:")
         with path.open(encoding="utf-8", errors="replace") as handle:
             print("".join(deque(handle, maxlen=12)), end="")
     else:
-        data = read_json(ROOT / "results/metrics/gru_thresholds.json")
-        threshold = data["per_seed_thresholds"]["42"]["Q99.9"]["threshold"]
+        threshold = read_json(ROOT / "results/metrics/gru_thresholds.json")["per_seed_thresholds"]["42"]["Q99.9"]["threshold"]
         expect("Ngưỡng benchmark", threshold, 1.058582, 6)
         print(f"Benchmark seed 42: tau = {threshold:.6f}")
 
@@ -260,23 +337,28 @@ def auxiliary(mode):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["log", "result", "event", "timeline", "all", "seeds", "benchmark-log", "benchmark-threshold", "1", "2", "3", "4"])
-    parser.add_argument("--run", type=Path, default=DEFAULT_RUN, help="Thư mục run đã có; không tự chọn run khác.")
+    parser.add_argument("--run", type=Path, default=os.environ.get("DT049_RUN"), help="Run đã lưu; mặc định lấy DT049_RUN do ./show thiết lập. Không tự chọn run mới nhất.")
+    parser.add_argument("--event", default=EVENT, help="Mặc định test1_atk_02.")
+    parser.add_argument("--detail", action="store_true", help="Thêm metric, ngưỡng, RMSE và thông tin đối chiếu.")
     args = parser.parse_args(argv)
     try:
-        alias_map = {"1": "log", "2": "result", "3": "event", "4": "timeline"}
-        mode = alias_map.get(args.mode, args.mode)
+        mode = {"1": "log", "2": "result", "3": "event", "4": "timeline"}.get(args.mode, args.mode)
         if mode in ("seeds", "benchmark-log", "benchmark-threshold"):
             auxiliary(mode)
             return 0
+        if args.run is None:
+            raise DemoError("Chưa chỉ định run. Dùng ./show hoặc truyền --run THƯ_MỤC_RUN; không tự chọn run thay thế.")
         path = args.run if args.run.is_absolute() else ROOT / args.run
         run = load_run(path)
+        if mode in ("log", "all"): load_log(run)
+        if mode in ("result", "event", "timeline", "all"): load_result(run, args.event)
         measured = inspect_event(run) if mode in ("event", "timeline", "all") else None
-        if mode in ("log", "all"): show_log(run)
-        if mode in ("result", "all"): show_result(run)
-        if mode in ("event", "all"): show_event(run, measured)
-        if mode in ("timeline", "all"): show_timeline(measured)
+        if mode in ("log", "all"): show_log(run, args.detail)
+        if mode in ("result", "all"): show_result(run, args.detail)
+        if mode in ("event", "all"): show_event(run, measured, args.detail)
+        if mode == "timeline": show_timeline(measured)
         return 0
-    except (DemoError, OSError, KeyError, ValueError, TypeError, ImportError, RuntimeError) as error:
+    except (DemoError, OSError, KeyError, ValueError, TypeError, ImportError, RuntimeError, EOFError, pickle.UnpicklingError) as error:
         print(f"DỪNG: {error}", file=sys.stderr)
         return 2
 

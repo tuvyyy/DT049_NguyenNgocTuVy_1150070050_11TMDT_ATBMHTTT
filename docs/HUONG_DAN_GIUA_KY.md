@@ -1,73 +1,104 @@
-# Giữa kỳ: thao tác GRU và phần code cần nắm
+# Giữa kỳ: demo terminal một sự kiện GRU
 
-## Chạy UI
+## Chuẩn bị trước giờ bảo vệ
 
-Vào **Overview → Thực hiện GRU**. Các trang phân tích khác để tra cứu khi được hỏi.
+- Vào đúng thư mục repo trên Kali, kiểm tra `.venv/bin/python` và `show` có sẵn.
+  Launcher dùng đúng Python của `.venv`, không phụ thuộc lệnh `python` toàn hệ thống.
+- Giữ run `runs/gru/20261018T114814_2e1846de` đã tạo trước đó. Dữ liệu, log cục bộ
+  và `runs/gru/` bị `.gitignore` loại khỏi Git; clone mới không có đủ bộ demo.
+- Nếu dùng run khác, truyền `--run` sau tên lệnh, hoặc đặt biến `DT049_RUN`.
+  Không tự chọn run mới nhất vì có thể là lần thử hoặc chưa đánh giá.
+- Dữ liệu `.npy` phải tồn tại đúng đường dẫn trong `data_manifest.json`.
+  Nguồn tải và cấu trúc thư mục được mô tả trong [README](../README.md#dữ-liệu-hai-2103).
+- Phóng to terminal, chọn font khoảng 20–24 và chạy thử cả ba lệnh trước.
+  Gặp `DỪNG` thì xử lý lỗi dữ liệu/artifact; không chạy train để che lỗi.
+- Nếu cần một bản dự phòng mới, chạy `./show all --detail > demo_gru_local.txt`
+  và đọc kiểm tra sau khi lệnh thành công. File đó là output lưu, không phải
+  bằng chứng đang thực thi lại khi mở nó sau này.
 
-| Bước | Bạn làm gì? | Kết quả nhìn thấy |
+## Đúng ba lệnh trình diễn
+
+```bash
+./show log
+./show result
+./show event
+```
+
+| Lệnh | Đọc hoặc tính gì? | Không nên nói |
 | --- | --- | --- |
-| Dữ liệu | Chọn `.npy`, giữ `data/processed/hai_21_03`, bấm **Chuẩn bị dữ liệu** | Bảng kiểm tra các file |
-| Huấn luyện | Giữ seed 42, thử 3 epoch, learning rate 0.001; bấm **Huấn luyện GRU** | Log chạy thật và checkpoint mới |
-| Đánh giá | Chọn test1 để demo nhanh, bấm **Chạy đánh giá** | Các chỉ số vừa tính trên test1 |
-| Sự kiện | Chọn phiên và sự kiện | Có phát hiện không, độ trễ, biểu đồ sai số |
+| `log` | Trích log huấn luyện thật đã lưu, kiểm tra CSV/JSON và hash checkpoint. | “Em đang train.” |
+| `result` | Đọc kết quả kiểm thử đã lưu, đối chiếu các bảng và checkpoint. | “Em vừa chạy lại toàn bộ test1.” |
+| `event` | Nạp trọng số GRU, tính lại dự báo/RMSE quanh một sự kiện, đối chiếu nhãn HAI. | “Hệ thống đang giám sát ICS trực tiếp.” |
 
-- **Seed:** mã khởi tạo để dễ lặp lại thí nghiệm, không phải điểm số.
-- **Epoch:** một lượt học qua dữ liệu; 3 epoch là tối đa 3 lượt.
-- **Learning rate:** mức điều chỉnh khi học; giữ mặc định 0.001 để bắt đầu.
-- **Chạy nhanh:** tối đa 10.000 dòng đầu của mỗi phiên học/kiểm định.
-  Phiên test được chọn vẫn chạy đầy đủ. Đây là lần chạy demo mới, không hứa ra 40/50.
-- Nếu dùng CSV gốc, chọn định dạng CSV và thư mục chứa train1–3, test1–5.
-  App dùng scaler đã có; các mảng mới được ghi riêng trong lần chạy.
-- Log tự cập nhật. Chỉ qua bước sau khi tác vụ hoàn tất; có nút dừng nếu cần.
-- Không có dữ liệu/thư viện thì app báo lỗi, không tạo kết quả giả.
+Mặc định là `test1_atk_02`. Dùng `./show event --detail` khi được hỏi về ngưỡng,
+đỉnh RMSE, giờ kết thúc và việc đối chiếu. Dùng `./show result --detail` để xem
+Event F1, Normal FA/h, Median Delay. Đây vẫn là các số đọc từ artifact.
+`./show timeline` là biểu đồ chữ tùy chọn, không nằm trong ba bước chính.
 
-## Nắm code theo thứ tự này
+## Lời thoại khoảng 45–60 giây
 
-Không cần đọc hết Dashboard hoặc thư mục backup để chuẩn bị phần GRU.
+Mẫu này dựa vào run đã lưu trong `demo_gru_60s.txt`. Chỉ đọc các con số này nếu
+đã chạy thử thành công trên Kali và output thực tế khớp. Nếu chọn run khác,
+nói theo output thật, không sửa số để khớp mẫu.
 
-| Đọc file/đoạn nào | Cần hiểu điều gì? |
+**Sau `./show log` (khoảng 15 giây):**
+
+“Đây là log huấn luyện em đã lưu trước buổi báo cáo, không phải đang train lại.
+Lần chạy nhanh dùng ba epoch; loss từ khoảng 0,499 giảm còn 0,207 và đã lưu checkpoint.”
+
+**Sau `./show result` (khoảng 10–15 giây):**
+
+“Đây là kết quả kiểm thử đã lưu trên test1 đầy đủ: cảnh báo khớp 5/5 sự kiện nhãn.
+Lần chạy nhanh này khác benchmark 40/50 trên năm phiên ở slide, nên số liệu khác nhau.”
+
+**Sau `./show event` (khoảng 20–25 giây):**
+
+“Ở bước này em nạp checkpoint và tính lại sai số dự đoán cho một sự kiện.
+Nhãn bắt đầu lúc 17:28:11; cảnh báo đầu trong vùng nhãn là 17:28:29, trễ 18 giây.
+GRU chỉ nhìn tín hiệu; nhãn tấn công chỉ dùng đối chiếu. Đây là sai số bất thường
+trùng nhãn HAI, chưa kết luận nguyên nhân vật lý.”
+
+Khi mở chi tiết, mốc kết thúc theo nhãn là 17:29:48. Ba mốc cần phân biệt:
+**17:28:11 → 17:28:29 → 17:29:48**. Không suy ra nguyên nhân vật lý chỉ từ việc
+sai số tăng hoặc giảm; nếu chưa kiểm chứng thì nói chưa kết luận.
+
+## Nắm code đủ để giải thích
+
+| File | Ý chính |
 | --- | --- |
-| `src/gru_model.py` — lớp `OneStepGRU` | Nhận chuỗi 30 mẫu × 79 tín hiệu; GRU và lớp đầu ra dự đoán mẫu tiếp theo. |
-| `src/gru_dataset.py` — `SessionWindowDataset.__getitem__` | Cắt 30 mẫu làm đầu vào, mẫu kế tiếp làm đáp án; không ghép qua hai phiên. |
-| `src/train_gru.py` — hàm `train_single_run` | Tính sai số, cập nhật mô hình, kiểm định và lưu checkpoint tốt nhất. Chưa cần đọc toàn bộ phần vẽ hình. |
-| `src/evaluate_final_test.py` — `score_gru`, các hàm `extract_*` và `match_events_one_to_one` | Tính sai số dự báo, tạo cảnh báo, ghép với sự kiện thật và tính độ trễ. |
-| `demo/be/gru_runtime.py` — `prepare`, `train`, `evaluate` | BE gọi lại các hàm GRU có sẵn; mỗi lần ghi vào thư mục riêng. |
+| `src/gru_model.py` | Dùng `torch.nn.GRU` và `Linear`: nhận 30 mẫu × 79 tín hiệu, dự đoán mẫu tiếp theo. |
+| `src/gru_dataset.py` | Cắt cửa sổ trong từng phiên, không ghép qua ranh giới hai file. |
+| `src/train_gru.py` | Dùng `torch.nn.MSELoss` và `torch.optim.Adam`; lưu checkpoint tốt nhất theo validation. |
+| `demo/show_event.py` | Đọc artifact hoặc suy luận một sự kiện, không gọi hàm train và không ghi file kết quả. |
+| `src/evaluate_final_test.py` | Phép tính RMSE và quy tắc ghép sự kiện của benchmark. |
 
-`demo/fe/gru_workflow.py` chỉ dựng các ô nhập/nút bấm và hiển thị tiến trình.
-`demo/fe/pages/` chứa các trang phân tích; CSS nằm trong `demo/fe/styles/`.
-`demo/app.py` chỉ khởi động FE; các tác vụ thực thi nằm trong `demo/be/`.
-`configs/primary_gru.yaml` giữ các thiết lập chính: cửa sổ 30, hidden size 64,
-79 đầu vào, một lớp GRU. Không cần học thuộc toàn bộ code giao diện.
+PyTorch cung cấp các khối GRU, loss và optimizer; phần của dự án là ứng dụng
+chúng vào quy trình HAI: tiền xử lý, cửa sổ, lựa chọn ngưỡng và đánh giá.
+Train1+train2 dùng học; train3 kiểm định/chọn ngưỡng; test1–test5 dùng đánh giá.
+Scaler chỉ fit trên train1+train2. Nhãn `attack` không nằm trong 79 đầu vào GRU.
 
-## Những câu cần tự giải thích được
+`event` tính lại một khoảng dữ liệu, không thay thế việc đánh giá toàn phiên.
+Kết quả ghép 1–1 đã lưu phải phù hợp với suy luận. Nếu có điểm vượt ngưỡng nhưng
+CSV không ghi sự kiện khớp, script dừng để kiểm tra quy tắc ghép trên toàn phiên,
+không tự chuyển trạng thái hoặc sửa metric.
 
-- **GRU học gì?** Học dữ liệu hoạt động bình thường để dự đoán tín hiệu tiếp theo.
-- **Khi nào báo bất thường?** Sai số dự báo vượt ngưỡng đã chọn trên train3.
-- **Dữ liệu chia ra sao?** Học train1+train2; kiểm định/chọn ngưỡng train3;
-  kiểm thử trên các phiên test được chọn. Benchmark gốc dùng test1–test5.
-- **40/50 nghĩa gì?** Bắt được 40 cuộc tấn công, còn bỏ sót 10; không có nghĩa
-  mọi cảnh báo đều đúng. Đây là kết quả GRU seed 42 chính thức, không phải số cố định của UI.
-- **Event F1:** Kết hợp khả năng bắt được tấn công và độ đúng của cảnh báo.
-- **Normal FA/h:** Số đợt báo động giả mỗi giờ dữ liệu bình thường.
-- **Median Delay:** Trung vị thời gian phát hiện, chỉ trên các sự kiện phát hiện được.
-  Sự kiện bỏ sót có delay không áp dụng, không gán 0.
+## Khi được hỏi thêm
 
-## Khi được hỏi về bài báo/DNN
+- `./show seeds`: in ba seed từ `results/metrics/final_test_summary.csv`.
+- `./show benchmark-log`: đọc 12 dòng cuối `results/logs/train_gru.log` nếu file
+  còn trên máy. Thiếu file thì báo thiếu, không tạo log thay thế.
+- `./show benchmark-threshold`: đọc ngưỡng benchmark seed 42, khoảng 1.058582.
+  Không dùng ngưỡng này thay cho khoảng 1.605896 của run demo mẫu.
+- **5/5 có phải chính xác 100%?** Không. Vẫn có cảnh báo không khớp nhãn;
+  xem Event F1 và Normal FA/h bằng chế độ chi tiết.
+- **DNN ở đâu?** Đã triển khai thí nghiệm bổ sung và lưu trong `backupcuoiki/`.
+  Giữa kỳ chỉ trình diễn GRU. Bài báo Kuchař & Fujdiak (2025) dùng DNN;
+  không gán GRU cho các tác giả, không nói đã tái lập nguyên bản 100%.
 
-Bài báo tham khảo dùng DNN phân loại bốn trạng thái; phần giữa kỳ tập trung GRU
-trên HAI. DNN là thí nghiệm bổ sung có điều chỉnh, đã lưu ở `backupcuoiki/dnn/`.
-Không nói bài báo gốc dùng GRU hoặc đã tái lập nguyên bản 100%.
+## Bằng chứng và phần cần kiểm tra lại
 
-## Lưu ý khi show
-
-- Trên Firefox, bấm `Ctrl+0` để về zoom 100%; `Ctrl+Shift+R` để tải lại CSS sau khi cập nhật code.
-- Dùng môi trường `.venv` của dự án. Đối chiếu phiên bản bằng
-  `.venv/bin/python -c "import streamlit; print(streamlit.__version__)"` và `firefox --version`.
-  `requirements-lock.txt` hiện khóa Streamlit 1.65.0. Không cần đổi trình duyệt để chạy demo.
-- Chuẩn bị sẵn dữ liệu trên Kali và môi trường `.venv` đang chạy được.
-- Không mở lần lượt tất cả trang phân tích; đi đúng bốn bước thao tác trên.
-- Tạo lần chạy mới để thay đổi thiết lập sau khi đã huấn luyện/đánh giá xong.
-- Dữ liệu gốc, scaler và benchmark không bị ghi đè bởi UI.
-- Tài liệu dài và báo cáo học thuật cũ nằm trong `backupcuoiki/tai_lieu/`.
-- Bộ tạo cửa sổ cũ và kết quả thử 30 epoch nằm trong `backupcuoiki/legacy/`,
-  không còn trộn vào mã/kết quả đang dùng cho giữa kỳ.
+`demo_gru_60s.txt` là bản đầu ra cũ đã lưu trong Git, có ghi nguồn ở đầu file.
+Nó không phải log mới và không chứng minh checkpoint/dữ liệu trên máy khác còn nguyên.
+Các test tự động dùng dữ liệu tổng hợp, không phải HAI thật. Môi trường Codex
+không có run mẫu và dữ liệu HAI cục bộ; người trình bày cần chạy lại ba lệnh
+trên Kali, thêm `--detail` để đối chiếu ngưỡng, RMSE và thời gian trước giờ bảo vệ.

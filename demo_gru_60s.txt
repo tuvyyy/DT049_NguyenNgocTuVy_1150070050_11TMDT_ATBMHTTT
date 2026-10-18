@@ -1,3 +1,13 @@
+BẢN ĐẦU RA ĐÃ LƯU — KHÔNG PHẢI MỘT LẦN THỰC THI MỚI
+Nguồn: nội dung được đưa vào Git tại commit c769e49.
+Run được ghi nhận: runs/gru/20261018T114814_2e1846de; seed 42, 3 epoch, chế độ nhanh.
+Phạm vi: test1 đầy đủ, minh họa riêng test1_atk_02.
+Giữ nguyên output chi tiết của phiên bản script cũ phía dưới để đối chiếu.
+Ba lệnh ./show hiện tại mặc định in gọn hơn; số liệu không được lấy từ tệp này.
+Môi trường rà soát không có run/dữ liệu HAI này để xác minh lại nguồn thực nghiệm.
+Cần chạy lại ./show log, ./show result, ./show event --detail trên Kali.
+Không dùng nội dung tệp để giả lập quá trình huấn luyện hay suy luận đang chạy.
+
 07:49:36 | Epoch  1/3 | Train Loss: 0.498980 | Val RMSE (s=5): 0.901687 | Train: 1.3s | Val: 0.1s | Patience: 0/5 *BEST*
 07:49:37 | Epoch  2/3 | Train Loss: 0.284288 | Val RMSE (s=5): 0.842883 | Train: 0.4s | Val: 0.1s | Patience: 0/5 *BEST*
 07:49:38 | Epoch  3/3 | Train Loss: 0.206619 | Val RMSE (s=5): 0.817999 | Train: 0.7s | Val: 0.1s | Patience: 0/5 *BEST*

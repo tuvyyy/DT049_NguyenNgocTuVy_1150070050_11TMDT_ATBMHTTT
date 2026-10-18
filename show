@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
-# Quick demo launcher for DT049 terminal walkthrough
-set -e
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON="${ROOT}/.venv/bin/python"
-
-case "${1:-all}" in
-    log|1)                    "$PYTHON" -B "${ROOT}/demo/show_event.py" log ;;
-    result|2|res)             "$PYTHON" -B "${ROOT}/demo/show_event.py" result ;;
-    event|3|atk)              "$PYTHON" -B "${ROOT}/demo/show_event.py" event ;;
-    timeline|4|time)          "$PYTHON" -B "${ROOT}/demo/show_event.py" timeline ;;
-    seeds)                    "$PYTHON" -B "${ROOT}/demo/show_event.py" seeds ;;
-    all)                      "$PYTHON" -B "${ROOT}/demo/show_event.py" all ;;
-    benchmark-log|b-log)      "$PYTHON" -B "${ROOT}/demo/show_event.py" benchmark-log ;;
-    benchmark-threshold|b-th) "$PYTHON" -B "${ROOT}/demo/show_event.py" benchmark-threshold ;;
-    *)                        "$PYTHON" -B "${ROOT}/demo/show_event.py" "$@" ;;
+# Only select an interpreter and an explicit default run; never train or select latest.
+set -euo pipefail
+DT049_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DT049_PYTHON="${DT049_ROOT}/.venv/bin/python"
+if [[ ! -x "$DT049_PYTHON" ]]; then
+    echo "DỪNG: không tìm thấy Python tại $DT049_PYTHON. Chuẩn bị đúng môi trường .venv trước khi demo." >&2
+    exit 2
+fi
+export DT049_RUN="${DT049_RUN:-${DT049_ROOT}/runs/gru/20261018T114814_2e1846de}"
+DT049_MODE="${1:-all}"
+if [[ $# -gt 0 ]]; then shift; fi
+case "$DT049_MODE" in
+    1) DT049_MODE=log ;;
+    2|res) DT049_MODE=result ;;
+    3|atk) DT049_MODE=event ;;
+    4|time) DT049_MODE=timeline ;;
+    b-log) DT049_MODE=benchmark-log ;;
+    b-th) DT049_MODE=benchmark-threshold ;;
 esac
+exec "$DT049_PYTHON" -B "${DT049_ROOT}/demo/show_event.py" "$DT049_MODE" "$@"
