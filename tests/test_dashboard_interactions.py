@@ -60,7 +60,7 @@ class TestDashboardInteractions(unittest.TestCase):
             self.assertEqual(self.app.dataframe[0].value["Attack ID"].tolist(), expected)
 
     def test_benchmark_metrics_overview_choices_and_exports(self):
-        self.app.radio(key="overview_mode").set_value("Tổng quan nghiên cứu").run()
+        self.app.button(key="overview_mode_1").click().run()
         for metric in self.app.selectbox(key="overview_metric").options:
             self.app.selectbox(key="overview_metric").set_value(metric).run()
             self.assertFalse(self.app.exception)

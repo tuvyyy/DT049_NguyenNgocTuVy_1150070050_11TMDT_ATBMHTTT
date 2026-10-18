@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import psutil
 from streamlit.testing.v1 import AppTest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -45,12 +46,23 @@ def settings(source):
 
 def wait_job(path, timeout=60):
     deadline = time.monotonic() + timeout
+    worker_pid = None
     while time.monotonic() < deadline:
         state = runtime.read_state(path)
+        worker_pid = state.get("pid") or worker_pid
         if state["status"] != "running":
             if state["status"] != "done":
                 log = path / f'{state["stage"]}.log'
                 raise AssertionError(log.read_text(encoding="utf-8") if log.exists() else state)
+            # State is saved before interpreter shutdown closes redirected logs.
+            # Wait for this worker so Windows can safely remove the test run.
+            if worker_pid:
+                try:
+                    worker = psutil.Process(worker_pid)
+                    if str(path) in worker.cmdline():
+                        worker.wait(timeout=10)
+                except psutil.NoSuchProcess:
+                    pass
             return state
         time.sleep(.1)
     runtime.stop(path)
@@ -63,14 +75,16 @@ class TestGRUExecutionUI(unittest.TestCase):
 
     def test_four_operation_steps_no_lecture_and_prerequisites(self):
         self.assertFalse(self.app.exception)
-        self.assertEqual(self.app.radio(key="overview_mode").value, "Thực hiện GRU")
-        self.assertEqual(self.app.radio(key="gru_step").options, STEPS)
+        self.assertEqual(self.app.session_state["overview_mode"], "Thực hiện GRU")
+        self.assertEqual([self.app.button(key=f"gru_step_{i}").label for i in range(4)], STEPS)
         self.assertTrue(self.app.button(key="gru_back").disabled)
         self.assertTrue(self.app.button(key="gru_next").disabled)
-        for step in STEPS[1:]:
-            self.app.radio(key="gru_step").set_value(step).run()
+        for index in range(1, len(STEPS)):
+            self.app.button(key=f"gru_step_{index}").click().run()
             self.assertFalse(self.app.exception)
             self.assertTrue(self.app.info)
+            self.assertEqual(self.app.session_state["gru_step"], STEPS[index])
+            self.assertEqual(self.app.button(key=f"gru_step_{index}").proto.type, "primary")
         self.assertEqual(len(self.app.get("popover")), 0)
         self.assertFalse(any("40/50" in element.value for element in self.app.markdown))
 
@@ -83,7 +97,7 @@ class TestGRUExecutionUI(unittest.TestCase):
             launch.assert_not_called()
 
     def test_other_gru_views_work_and_dnn_is_archived(self):
-        self.app.radio(key="overview_mode").set_value("Tổng quan nghiên cứu").run()
+        self.app.button(key="overview_mode_1").click().run()
         self.assertFalse(self.app.exception)
         if (DEMO / "dnn_v2.py").exists():
             self.assertIn("nav_dnn", [button.key for button in self.app.button])
@@ -242,8 +256,8 @@ class TestRealGRUJob(unittest.TestCase):
                 self.assertIn("Epoch", (path / "train.log").read_text(encoding="utf-8"))
                 with np.load(path / "scores_test1.npz") as scores:
                     self.assertEqual(len(scores["scores"]), 66)
-                for step in STEPS:
-                    app.radio(key="gru_step").set_value(step).run()
+                for index in range(len(STEPS)):
+                    app.button(key=f"gru_step_{index}").click().run()
                     self.assertFalse(app.exception)
                 self.assertEqual(len(app.selectbox(key="gru_event").options), 2)
                 app.selectbox(key="gru_status").set_value("Bỏ sót").run()
@@ -251,11 +265,11 @@ class TestRealGRUJob(unittest.TestCase):
                 app.selectbox(key="gru_status").set_value("Tất cả").run()
                 self.assertFalse(app.exception)
                 self.assertFalse(any("40/50" in item.value for item in app.markdown))
-                app.radio(key="gru_step").set_value(STEPS[2]).run()
+                app.button(key="gru_step_2").click().run()
                 self.assertTrue(any(f'{result["tp"]}/2' in item.value for item in app.markdown))
                 app.button(key="gru_new").click().run()
                 self.assertFalse(app.exception)
-                self.assertEqual(app.radio(key="gru_step").value, STEPS[0])
+                self.assertEqual(app.session_state["gru_step"], STEPS[0])
                 self.assertTrue(app.button(key="gru_next").disabled)
         finally:
             if path is not None:

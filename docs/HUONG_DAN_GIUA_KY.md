@@ -60,6 +60,10 @@ Không nói bài báo gốc dùng GRU hoặc đã tái lập nguyên bản 100%.
 
 ## Lưu ý khi show
 
+- Trên Firefox, bấm `Ctrl+0` để về zoom 100%; `Ctrl+Shift+R` để tải lại CSS sau khi cập nhật code.
+- Dùng môi trường `.venv` của dự án. Đối chiếu phiên bản bằng
+  `.venv/bin/python -c "import streamlit; print(streamlit.__version__)"` và `firefox --version`.
+  `requirements-lock.txt` hiện khóa Streamlit 1.65.0. Không cần đổi trình duyệt để chạy demo.
 - Chuẩn bị sẵn dữ liệu trên Kali và môi trường `.venv` đang chạy được.
 - Không mở lần lượt tất cả trang phân tích; đi đúng bốn bước thao tác trên.
 - Tạo lần chạy mới để thay đổi thiết lập sau khi đã huấn luyện/đánh giá xong.

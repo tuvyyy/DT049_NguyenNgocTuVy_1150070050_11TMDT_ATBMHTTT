@@ -1,30 +1,19 @@
-/* GRU workspace only: native widgets, one accent, no nested card styling. */
-body:has(.st-key-gru_flow) {
+/* This stylesheet is injected only while the GRU workflow is rendered.
+   Page surfaces do not require :has() support. */
+:root {
     --gf-ink: #202c32;
     --gf-muted: #64716f;
     --gf-line: #dce2de;
     --gf-accent: #28594c;
 }
-body:has(.st-key-gru_flow) .stApp,
-body:has(.st-key-gru_flow) [data-testid="stAppViewContainer"],
-body:has(.st-key-gru_flow) [data-testid="stHeader"] {
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stHeader"] {
     background: #f3f4f0; color: var(--gf-ink); color-scheme: light;
 }
-body:has(.st-key-gru_flow) .stMainBlockContainer {
+.stMainBlockContainer {
     max-width: none; width: 100%; padding: 3.5rem 2rem 1.5rem;
 }
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar [role="radiogroup"] {
-    display: inline-flex; gap: 4px; width: fit-content;
-    background: #e7ebe3; padding: 3px; border-radius: 6px;
-}
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar label[data-baseweb="radio"] {
-    margin: 0; padding: 7px 16px; border-radius: 4px; gap: 0; background: transparent;
-}
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar label[data-baseweb="radio"] > div:first-child { display: none; }
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar label p { color: #64716f; font-size: 16px; }
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar label:has(input:checked) { background: #fff; }
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar label:has(input:checked) p { color: #202c32; font-weight: 600; }
-body:has(.st-key-gru_flow) .st-key-overview_mode_bar label:focus-within { outline: 2px solid #759c88; }
 .st-key-gru_flow { color: var(--gf-ink); font-size: 18px; }
 .st-key-gru_flow [data-testid="stVerticalBlock"] { gap: .8rem; }
 .st-key-gru_flow .gf-header {
@@ -47,23 +36,20 @@ body:has(.st-key-gru_flow) .st-key-overview_mode_bar label:focus-within { outlin
 .st-key-gru_flow .gf-status i { width: 6px; height: 6px; border-radius: 50%; background: #89948a; }
 .st-key-gru_flow .gf-status-live i { background: var(--gf-accent); }
 
-/* Style labels only, never both a label and its parent wrapper. */
-.st-key-gru_step [role="radiogroup"] {
-    display: flex; flex-direction: row; flex-wrap: nowrap;
-    gap: 0; width: 100%; border-bottom: 1px solid #ccd5ce;
+/* Native step buttons: state comes from Python's primary/secondary type. */
+.st-key-gru_flow .st-key-gru_step_nav { border-bottom: 1px solid #ccd5ce; }
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button {
+    justify-content: flex-start; min-height: 48px; padding: 10px 8px !important;
+    background: transparent !important; border: 0 !important;
+    border-bottom: 3px solid transparent !important;
+    border-radius: 0 !important; box-shadow: none !important;
 }
-.st-key-gru_step [role="radiogroup"] > div { flex: 1; min-width: 0; }
-.st-key-gru_step label[data-baseweb="radio"] {
-    flex: 1; margin: 0; padding: 13px 8px 13px 0; gap: 0;
-    border-bottom: 2px solid transparent; border-radius: 0;
-    background: transparent; cursor: pointer; min-width: 0;
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button p {
+    color: #64716f !important; font-size: 17px; font-weight: 500 !important;
 }
-.st-key-gru_step label[data-baseweb="radio"] > div:first-child { display: none; }
-.st-key-gru_step label p { color: #697570; font-size: 17px; font-weight: 500; }
-.st-key-gru_step label:has(input:checked) { border-bottom-color: var(--gf-accent); }
-.st-key-gru_step label:has(input:checked) p { color: var(--gf-accent); font-weight: 700; }
-.st-key-gru_step label:hover p { color: var(--gf-ink); }
-.st-key-gru_step label:focus-within { outline: 2px solid #769d8a; outline-offset: -2px; }
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[kind="primary"] { border-bottom-color: #28594c !important; }
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[kind="primary"] p { color: #28594c !important; font-weight: 700 !important; }
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button:hover { background: #e7ebe3 !important; }
 
 .st-key-gru_flow .st-key-gru_workspace {
     background: #fff; border: 1px solid var(--gf-line); border-radius: 10px;
@@ -87,6 +73,9 @@ body:has(.st-key-gru_flow) .st-key-overview_mode_bar label:focus-within { outlin
 .st-key-gru_flow [data-baseweb="input"],
 .st-key-gru_flow [data-baseweb="base-input"],
 .st-key-gru_flow [data-baseweb="select"] > div,
+.st-key-gru_flow [data-testid="stTextInputRootElement"],
+.st-key-gru_flow [data-testid="stSelectbox"] [role="group"],
+.st-key-gru_flow [data-testid="stMultiSelect"] [role="group"],
 .st-key-gru_flow [data-testid="stNumberInputContainer"] {
     background: #f8f9f6 !important; color: var(--gf-ink) !important;
     border-color: #cdd6ce !important; border-radius: 6px; box-shadow: none;
@@ -97,27 +86,42 @@ body:has(.st-key-gru_flow) .st-key-overview_mode_bar label:focus-within { outlin
 .st-key-gru_flow [data-baseweb="select"] svg {
     color: var(--gf-ink) !important; fill: currentColor; font-size: 18px;
 }
+.st-key-gru_flow [data-testid="stSelectbox"] [role="group"] svg,
+.st-key-gru_flow [data-testid="stSelectbox"] [role="group"] button,
+.st-key-gru_flow [data-testid="stMultiSelect"] [role="group"] svg,
+.st-key-gru_flow [data-testid="stMultiSelect"] [role="group"] input {
+    color: var(--gf-ink) !important; font-size: 17px;
+}
 .st-key-gru_flow input { background: #f8f9f6 !important; caret-color: var(--gf-accent); }
 .st-key-gru_flow input::placeholder { color: #7a847d !important; }
 .st-key-gru_flow [data-testid="stNumberInput"] button {
     background: #eef1eb !important; color: var(--gf-ink) !important; border-color: #dce2de !important;
 }
 .st-key-gru_flow [data-baseweb="input"]:focus-within,
+.st-key-gru_flow [data-testid="stTextInputRootElement"]:focus-within,
+.st-key-gru_flow [data-testid="stSelectbox"] [role="group"]:focus-within,
 .st-key-gru_flow [data-baseweb="select"]:focus-within > div { border-color: var(--gf-accent) !important; }
 .st-key-gru_flow [data-baseweb="tag"] { background: #e7eee6 !important; color: #28594c !important; }
+.st-key-gru_flow [data-testid="stMultiSelectTagsContainer"] [data-tag] {
+    background: #e7eee6 !important; color: #28594c !important; font-size: 17px;
+}
 /* Select menus are portaled outside the workspace. */
-body:has(.st-key-gru_flow) [data-baseweb="popover"] [role="listbox"],
-body:has(.st-key-gru_flow) [data-baseweb="popover"] [role="option"] {
+[data-baseweb="popover"] [role="listbox"],
+[data-baseweb="popover"] [role="option"],
+[data-testid="stSelectboxVirtualDropdown"],
+[data-testid="stMultiSelectDropdown"],
+[role="listbox"],
+[role="option"] {
     background: #fff !important; color: #202c32 !important; font-size: 18px;
 }
-body:has(.st-key-gru_flow) [data-baseweb="popover"] [role="option"]:hover { background: #edf2eb !important; }
+[data-baseweb="popover"] [role="option"]:hover { background: #edf2eb !important; }
+[role="option"][data-focused],
+[role="option"][data-hovered] { background: #edf2eb !important; }
 
 /* Profile remains a native radio, distinct from step navigation. */
 .st-key-gru_profile [role="radiogroup"] { gap: 20px; }
 .st-key-gru_profile label p { font-size: 17px; color: #435148 !important; }
-.st-key-gru_profile label:has(input:checked) > div:first-child {
-    border-color: var(--gf-accent); background-color: var(--gf-accent);
-}
+.st-key-gru_profile input { accent-color: #28594c; }
 .st-key-gru_flow button[kind="primary"],
 .st-key-gru_flow button[kind="primaryFormSubmit"] {
     background: var(--gf-accent) !important; border: 1px solid var(--gf-accent) !important;
@@ -184,12 +188,9 @@ body:has(.st-key-gru_flow) [data-baseweb="popover"] [role="option"]:hover { back
 .st-key-gru_footer [data-testid="stCaptionContainer"] { text-align: center; }
 .st-key-gru_flow [data-testid="stCode"] code { font-size: 15px; }
 @media (max-width: 760px) {
-    body:has(.st-key-gru_flow) .stMainBlockContainer { padding: 3.5rem 1rem 1rem; }
+    .stMainBlockContainer { padding: 3.5rem 1rem 1rem; }
     .st-key-gru_flow .st-key-gru_workspace { padding: 18px; }
-    .st-key-gru_step [role="radiogroup"] { flex-wrap: wrap; }
-    .st-key-gru_step label[data-baseweb="radio"],
-    .st-key-gru_step [role="radiogroup"] > div { flex: 1 1 45%; }
-    .st-key-gru_step label p { font-size: 16px; }
+    .st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button p { font-size: 16px; }
     .st-key-gru_flow .gf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
     .st-key-gru_flow .gf-stat:nth-child(odd) { border-left: 0; padding-left: 0; }
     .st-key-gru_flow .gf-event { flex-direction: column; gap: 12px; }

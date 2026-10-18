@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 from fe.gru_workflow import render_gru_workflow
+from fe.navigation import navigation
 from fe.overview import render_overview
 from fe.sidebar import render_sidebar
 from fe.pages.comparison import render_comparison
@@ -37,8 +38,7 @@ def run_app():
     page = render_sidebar()
     if page == "Overview":
         with st.container(key="overview_mode_bar"):
-            mode = st.radio("Chế độ xem", ["Thực hiện GRU", "Tổng quan nghiên cứu"],
-                            horizontal=True, label_visibility="collapsed", key="overview_mode")
+            mode = navigation(["Thực hiện GRU", "Tổng quan nghiên cứu"], key="overview_mode")
         if mode == "Thực hiện GRU":
             render_gru_workflow()
         else:

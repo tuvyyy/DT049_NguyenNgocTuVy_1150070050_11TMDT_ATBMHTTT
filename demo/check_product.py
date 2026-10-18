@@ -24,6 +24,7 @@ DASHBOARD_SOURCES = [
     "demo/app.py",
     "demo/fe/app.py",
     "demo/fe/gru_workflow.py",
+    "demo/fe/navigation.py",
     "demo/fe/styles/gru_workflow.css",
     "demo/fe/styles/overview.css",
     "demo/fe/styles/sidebar.css",

@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from be import gru_runtime as runtime
+from fe.navigation import navigation
 
 STEPS = ["1 · Dữ liệu", "2 · Huấn luyện GRU", "3 · Đánh giá", "4 · Kiểm tra sự kiện"]
 
@@ -258,9 +259,7 @@ def render_gru_workflow():
         status = "Đang chạy" if busy else "Cần kiểm tra" if state.get("status") == "failed" else "Hoàn tất" if "evaluate" in state.get("completed", []) else "Sẵn sàng" if path else "Chưa bắt đầu"
         _html('<header class="gf-header"><div><span class="gf-eyebrow">DT049 / HAI 21.03</span>'
               f'<h1>Thực hiện GRU<span class="gf-header-dot">.</span></h1></div><span class="gf-status {"gf-status-live" if busy else ""}"><i></i>{status}</span></header>')
-        if st.session_state.get("gru_step") not in STEPS:
-            st.session_state["gru_step"] = STEPS[0]
-        step = st.radio("Các bước thực hiện", STEPS, horizontal=True, label_visibility="collapsed", key="gru_step", width="stretch")
+        step = navigation(STEPS, key="gru_step")
         index = STEPS.index(step)
         with st.container(key="gru_workspace"):
             if state.get("status") == "failed":
