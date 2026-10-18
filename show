@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Quick demo launcher for DT049 terminal walkthrough
+set -e
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON="${ROOT}/.venv/bin/python"
+
+case "${1:-all}" in
+    1|log)                    "$PYTHON" -B "${ROOT}/demo/show_event.py" log ;;
+    2|result|res)             "$PYTHON" -B "${ROOT}/demo/show_event.py" result ;;
+    3|event|atk)              "$PYTHON" -B "${ROOT}/demo/show_event.py" event ;;
+    4|timeline|time)          "$PYTHON" -B "${ROOT}/demo/show_event.py" timeline ;;
+    all)                      "$PYTHON" -B "${ROOT}/demo/show_event.py" all ;;
+    seeds)                    "$PYTHON" -B "${ROOT}/demo/show_event.py" seeds ;;
+    benchmark-log|b-log)      "$PYTHON" -B "${ROOT}/demo/show_event.py" benchmark-log ;;
+    benchmark-threshold|b-th) "$PYTHON" -B "${ROOT}/demo/show_event.py" benchmark-threshold ;;
+    *)                        "$PYTHON" -B "${ROOT}/demo/show_event.py" "$@" ;;
+esac
