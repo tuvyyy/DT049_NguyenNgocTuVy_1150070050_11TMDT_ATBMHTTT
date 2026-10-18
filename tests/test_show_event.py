@@ -81,7 +81,7 @@ class TestTerminalDemo(unittest.TestCase):
         with redirect_stdout(stream):
             cli.show_timeline(data)
         output = stream.getvalue()
-        labels = [line.split("|", 1)[1] for line in output.splitlines() if line.startswith("      NHAN|")]
+        labels = [line.split("|", 1)[1] for line in output.splitlines() if line.lstrip().startswith(("Nhãn|", "NHAN|"))]
         self.assertEqual(sum(map(len, labels)), 118)
         self.assertEqual("".join(labels)[10], "[")
         self.assertEqual("".join(labels)[107], "]")

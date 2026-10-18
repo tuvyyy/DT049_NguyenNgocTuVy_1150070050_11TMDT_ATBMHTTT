@@ -182,21 +182,22 @@ def inspect_event(run):
 
 
 def show_log(run):
-    print(f"CHẠY NHANH | seed {run['settings']['seed']} | trích train.log đã lưu")
-    for epoch, maximum, loss in run["logs"]:
-        print(f"Epoch {epoch}/{maximum} | Train Loss = {float(loss):.6f}")
-    print(f"Ngưỡng tau = {run['trained']['threshold']:.6f} | không huấn luyện lại")
+    log_text = require(run["path"] / "train.log").read_text(encoding="utf-8")
+    for line in log_text.splitlines():
+        if "Epoch" in line:
+            print(line.strip())
+    print(f"Ngưỡng tau: {run['trained']['threshold']:.6f}")
 
 
 def show_result(run):
     result = run["result"]
-    print("TEST1 | kết quả đã lưu của lần chạy nhanh")
+    print("Kết quả test1:")
     print(f"Khớp nhãn: {result['tp']}/{result['tp'] + result['fn']} | Event F1: {result['event_f1']:.6f}")
     print(f"Normal FA/h: {result['normal_fa_events_per_hour']:.4f} | Median Delay: {result['median_delay_sec']:g} giây")
 
 
 def show_event(run, measured):
-    print(f"{EVENT} | sai số bất thường đối chiếu nhãn tấn công")
+    print(f"Sự kiện {EVENT}:")
     print(f"Bắt đầu: {run['event']['orig_start']}")
     print(f"Cảnh báo: {str(measured['first'].astype('datetime64[s]')).replace('T', ' ')} | trễ {measured['delay']:g} giây")
     print(f"Kết thúc: {run['event']['orig_end']}")
@@ -210,7 +211,7 @@ def show_timeline(measured):
     levels = [top, (top + threshold) / 2, threshold, threshold / 2, 0]
     width = max(12, min(60, shutil.get_terminal_size((96, 30)).columns - 12))
     print("1 cột = 1 giây | * RMSE (phân mức); ! cảnh báo đầu; [=] nhãn tấn công")
-    print(f"Vạch ngang tau = {threshold:.6f}; nhãn không được đưa vào GRU.")
+    print(f"Vạch ngang tau = {threshold:.6f} (* tại hàng tau chỉ thể hiện mức gần ngưỡng)")
     for offset in range(0, len(scores), width):
         part = scores[offset:offset + width]
         times = measured["times"][offset:offset + width]
@@ -231,7 +232,7 @@ def show_timeline(measured):
         for column, time in enumerate(times):
             if time == np.datetime64(START): marks[column] = "["
             if time == np.datetime64(END): marks[column] = "]"
-        print(f"{'NHAN':>10}|{''.join(marks)}")
+        print(f"{'Nhãn':>10}|{''.join(marks)}")
 
 
 def auxiliary(mode):
@@ -240,38 +241,40 @@ def auxiliary(mode):
         rows = [r for r in read_csv(source) if r["model_id"] in ("gru_seed42", "gru_seed43", "gru_seed44")]
         if len(rows) != 3:
             raise DemoError("CSV tổng hợp không đủ ba seed GRU.")
-        print("BENCHMARK | test1-test5 | final_test_summary.csv")
+        print("Benchmark (test1–test5):")
         for row in rows:
-            print(f"{row['model_id']} | nhãn khớp {row['tp_detected']}/{row['evaluable_attacks']} | F1 {float(row['event_f1']):.6f} | FA/h {float(row['normal_fa_events_per_hour']):.4f}")
+            print(f"{row['model_id']}: khớp {row['tp_detected']}/{row['evaluable_attacks']} | F1 {float(row['event_f1']):.6f} | FA/h {float(row['normal_fa_events_per_hour']):.4f}")
     elif mode == "benchmark-log":
         path = require(ROOT / "results/logs/train_gru.log")
         from collections import deque
-        print(f"12 dòng cuối của {path.relative_to(ROOT)} (log có sẵn, không chạy train)")
+        print(f"12 dòng cuối {path.relative_to(ROOT)}:")
         with path.open(encoding="utf-8", errors="replace") as handle:
             print("".join(deque(handle, maxlen=12)), end="")
     else:
         data = read_json(ROOT / "results/metrics/gru_thresholds.json")
         threshold = data["per_seed_thresholds"]["42"]["Q99.9"]["threshold"]
         expect("Ngưỡng benchmark", threshold, 1.058582, 6)
-        print(f"BENCHMARK | GRU seed 42 | tau = {threshold:.6f} (không dùng cho demo nhanh)")
+        print(f"Benchmark seed 42: tau = {threshold:.6f}")
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=["log", "result", "event", "timeline", "all", "seeds", "benchmark-log", "benchmark-threshold"])
+    parser.add_argument("mode", choices=["log", "result", "event", "timeline", "all", "seeds", "benchmark-log", "benchmark-threshold", "1", "2", "3", "4"])
     parser.add_argument("--run", type=Path, default=DEFAULT_RUN, help="Thư mục run đã có; không tự chọn run khác.")
     args = parser.parse_args(argv)
     try:
-        if args.mode in ("seeds", "benchmark-log", "benchmark-threshold"):
-            auxiliary(args.mode)
+        alias_map = {"1": "log", "2": "result", "3": "event", "4": "timeline"}
+        mode = alias_map.get(args.mode, args.mode)
+        if mode in ("seeds", "benchmark-log", "benchmark-threshold"):
+            auxiliary(mode)
             return 0
         path = args.run if args.run.is_absolute() else ROOT / args.run
         run = load_run(path)
-        measured = inspect_event(run) if args.mode in ("event", "timeline", "all") else None
-        if args.mode in ("log", "all"): show_log(run)
-        if args.mode in ("result", "all"): show_result(run)
-        if args.mode in ("event", "all"): show_event(run, measured)
-        if args.mode in ("timeline", "all"): show_timeline(measured)
+        measured = inspect_event(run) if mode in ("event", "timeline", "all") else None
+        if mode in ("log", "all"): show_log(run)
+        if mode in ("result", "all"): show_result(run)
+        if mode in ("event", "all"): show_event(run, measured)
+        if mode in ("timeline", "all"): show_timeline(measured)
         return 0
     except (DemoError, OSError, KeyError, ValueError, TypeError, ImportError, RuntimeError) as error:
         print(f"DỪNG: {error}", file=sys.stderr)
