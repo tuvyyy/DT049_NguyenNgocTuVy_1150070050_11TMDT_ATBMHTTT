@@ -43,12 +43,20 @@
     background: transparent !important; border: 0 !important;
     border-bottom: 3px solid transparent !important;
     border-radius: 0 !important; box-shadow: none !important;
+    color: #334155 !important;
 }
-.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button p {
-    color: #64716f !important; font-size: 17px; font-weight: 500 !important;
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button * {
+    color: #334155 !important; font-size: 17px !important; font-weight: 550 !important;
 }
-.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[kind="primary"] { border-bottom-color: #28594c !important; }
-.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[kind="primary"] p { color: #28594c !important; font-weight: 700 !important; }
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[kind="primary"],
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[data-testid="stBaseButton-primary"] {
+    border-bottom-color: #28594c !important;
+    color: #28594c !important;
+}
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[kind="primary"] *,
+.st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button[data-testid="stBaseButton-primary"] * {
+    color: #28594c !important; font-weight: 750 !important;
+}
 .st-key-gru_flow .st-key-gru_step_nav [data-testid="stButton"] button:hover { background: #e7ebe3 !important; }
 
 .st-key-gru_flow .st-key-gru_workspace {
@@ -120,27 +128,43 @@
 
 /* Profile remains a native radio, distinct from step navigation. */
 .st-key-gru_profile [role="radiogroup"] { gap: 20px; }
-.st-key-gru_profile label p { font-size: 17px; color: #435148 !important; }
+.st-key-gru_profile label,
+.st-key-gru_profile label *,
+.st-key-gru_flow [data-testid="stRadio"] label,
+.st-key-gru_flow [data-testid="stRadio"] label * { font-size: 17px; color: #1e293b !important; }
 .st-key-gru_profile input { accent-color: #28594c; }
 .st-key-gru_flow button[kind="primary"],
-.st-key-gru_flow button[kind="primaryFormSubmit"] {
+.st-key-gru_flow button[kind="primaryFormSubmit"],
+.st-key-gru_flow button[data-testid="stBaseButton-primary"],
+.st-key-gru_flow button[data-testid="stBaseButton-primaryFormSubmit"] {
     background: var(--gf-accent) !important; border: 1px solid var(--gf-accent) !important;
     color: #fff !important; border-radius: 6px; min-height: 48px; padding: 10px 20px; box-shadow: none;
 }
-.st-key-gru_flow button[kind="primary"] p,
-.st-key-gru_flow button[kind="primaryFormSubmit"] p { color: #fff !important; font-size: 17px; font-weight: 600; }
+.st-key-gru_flow button[kind="primary"] *,
+.st-key-gru_flow button[kind="primaryFormSubmit"] *,
+.st-key-gru_flow button[data-testid="stBaseButton-primary"] *,
+.st-key-gru_flow button[data-testid="stBaseButton-primaryFormSubmit"] * { color: #fff !important; font-size: 17px; font-weight: 600; }
 .st-key-gru_flow button[kind="primary"]:hover,
-.st-key-gru_flow button[kind="primaryFormSubmit"]:hover { background: #214b3f !important; }
+.st-key-gru_flow button[kind="primaryFormSubmit"]:hover,
+.st-key-gru_flow button[data-testid="stBaseButton-primary"]:hover,
+.st-key-gru_flow button[data-testid="stBaseButton-primaryFormSubmit"]:hover { background: #214b3f !important; }
 .st-key-gru_flow button[kind="secondary"],
-.st-key-gru_flow button[kind="secondaryFormSubmit"] {
-    color: #425147 !important; background: #fff !important;
+.st-key-gru_flow button[kind="secondaryFormSubmit"],
+.st-key-gru_flow button[data-testid="stBaseButton-secondary"],
+.st-key-gru_flow button[data-testid="stBaseButton-secondaryFormSubmit"] {
+    color: #1e293b !important; background: #fff !important;
     border: 1px solid #cdd6ce !important; border-radius: 6px; min-height: 48px;
 }
-.st-key-gru_flow button[kind="secondary"] p { color: inherit !important; font-size: 17px; }
-.st-key-gru_flow button:disabled {
-    background: #e9ede6 !important; border-color: #dde3da !important; opacity: 1; color: #778273 !important;
+.st-key-gru_flow button[kind="secondary"] *,
+.st-key-gru_flow button[kind="secondaryFormSubmit"] *,
+.st-key-gru_flow button[data-testid="stBaseButton-secondary"] *,
+.st-key-gru_flow button[data-testid="stBaseButton-secondaryFormSubmit"] * { color: #1e293b !important; font-size: 17px; }
+.st-key-gru_flow button:disabled,
+.st-key-gru_flow button[disabled] {
+    background: #e9ede6 !important; border-color: #dde3da !important; opacity: 1; color: #64748b !important;
 }
-.st-key-gru_flow button:disabled p { color: #778273 !important; }
+.st-key-gru_flow button:disabled *,
+.st-key-gru_flow button[disabled] * { color: #64748b !important; }
 .st-key-gru_flow button:focus-visible { outline: 2px solid #759c88; outline-offset: 3px; }
 .st-key-gru_flow [data-testid="stFormSubmitButton"] { margin-top: 10px; }
 .st-key-gru_flow [data-testid="stExpander"] { border: 0; border-top: 1px solid #e4e8e0; border-radius: 0; background: transparent; }

@@ -12,12 +12,22 @@
 .st-key-overview_mode_bar .st-key-overview_mode_nav button {
     border: 1px solid transparent !important; border-radius: 4px !important;
     min-height: 42px; padding: 7px 10px; background: transparent !important;
-    color: #52625a !important; box-shadow: none !important;
+    color: #334155 !important; box-shadow: none !important;
 }
-.st-key-overview_mode_bar .st-key-overview_mode_nav button p { font-size: 16px !important; color: inherit !important; }
-.st-key-overview_mode_bar .st-key-overview_mode_nav button[kind="primary"] { background: #fff !important; border-color: #d9e1d7 !important; color: #202c32 !important; }
-.st-key-overview_mode_bar .st-key-overview_mode_nav button[kind="primary"] p { font-weight: 650; }
+.st-key-overview_mode_bar .st-key-overview_mode_nav button * { font-size: 16px !important; color: #334155 !important; }
+.st-key-overview_mode_bar .st-key-overview_mode_nav button[kind="primary"],
+.st-key-overview_mode_bar .st-key-overview_mode_nav button[data-testid="stBaseButton-primary"] {
+    background: #fff !important; border-color: #d9e1d7 !important; color: #0f172a !important;
+}
+.st-key-overview_mode_bar .st-key-overview_mode_nav button[kind="primary"] *,
+.st-key-overview_mode_bar .st-key-overview_mode_nav button[data-testid="stBaseButton-primary"] * {
+    color: #0f172a !important; font-weight: 650 !important;
+}
 .st-key-overview_mode_bar .st-key-overview_mode_nav button:focus-visible { outline: 2px solid #759c88; outline-offset: 2px; }
+.st-key-overview_mode_bar [data-testid="stRadio"] label,
+.st-key-overview_mode_bar [data-testid="stRadio"] label * {
+    color: #0f172a !important;
+}
 [data-testid="stMain"] [data-testid="stTextInputRootElement"],
 [data-testid="stMain"] [data-testid="stTextInput"] [data-baseweb="input"],
 [data-testid="stMain"] [data-testid="stSelectbox"] [data-baseweb="select"] > div,
