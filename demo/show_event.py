@@ -259,9 +259,11 @@ def show_log(run, detail=False):
     chosen = logs if detail or len(logs) <= 3 else [logs[i] for i in sorted({0, run['trained']['best_epoch'] - 1, len(logs) - 1})]
     for epoch, maximum, loss in chosen:
         print(f"Epoch {epoch}/{maximum} | Train Loss: {float(loss):.6f}")
-    print(f"Checkpoint đã lưu: gru.pt (epoch {run['trained']['best_epoch']}); SHA-256 khớp.")
+    print(f"Mô hình đã được lưu: gru.pt (vòng học {run['trained']['best_epoch']}).")
     if len(chosen) != len(logs): print(f"Đang trích {len(chosen)}/{len(logs)} epoch; dùng --detail để xem đủ.")
-    if detail: print(f"Run: {run['path']} | tau: {run['trained']['threshold']:.6f}")
+    if detail:
+        print("SHA-256 khớp.")
+        print(f"Run: {run['path']} | tau: {run['trained']['threshold']:.6f}")
 
 
 def show_result(run, detail=False):
@@ -284,6 +286,9 @@ def show_event(run, measured, detail=False):
     else:
         print(f"Cảnh báo đầu trong vùng nhãn: {str(measured['first'].astype('datetime64[s]')).replace('T', ' ')}")
         print(f"Độ trễ: {measured['delay']:g} giây | Kết luận: sai số bất thường khớp nhãn HAI.")
+    print(f"Ngưỡng cảnh báo (Q99.9): {measured['threshold']:.3f} | Sai số cao nhất: {measured['peak']:.3f}")
+    if measured['peak'] > measured['threshold']:
+        print("Sai số đã vượt ngưỡng cảnh báo.")
     if detail:
         print(f"Kết thúc theo nhãn: {run['event']['orig_end']}")
         print(f"tau: {measured['threshold']:.6f} | Đỉnh RMSE trong vùng nhãn: {measured['peak']:.6f}")

@@ -143,7 +143,11 @@ class TestTerminalDemo(unittest.TestCase):
             self.assertIn("gru.pt", invoke("log", "--run", str(path))[2])
             metadata_fixture(path)
             (path / "gru.pt").write_bytes(b"changed")
-            self.assertIn("SHA-256", invoke("log", "--run", str(path))[2])
+            for options in [(), ("--detail",)]:
+                result, output, error = invoke("log", "--run", str(path), *options)
+                self.assertEqual(result, 2)
+                self.assertEqual(output, "")
+                self.assertIn("SHA-256", error)
             metadata_fixture(path)
             (path / "train.log").write_text("not an epoch log", encoding="utf-8")
             self.assertIn("Số dòng epoch", invoke("log", "--run", str(path))[2])
@@ -162,6 +166,11 @@ class TestTerminalDemo(unittest.TestCase):
                 self.assertEqual(result, 0, error)
                 self.assertIn("seed 43", output)
                 self.assertIn("5 epoch", output)
+                self.assertIn("Mô hình đã được lưu: gru.pt (vòng học 5).", output)
+                self.assertNotIn("SHA-256", output)
+                result, detailed, error = invoke("log", "--detail", "--run", str(path))
+                self.assertEqual(result, 0, error)
+                self.assertIn("SHA-256 khớp.", detailed)
                 metadata_fixture(path, seed=43, epochs=5, row_limit=0, threshold=.75)
                 (path / "train.log").unlink()
                 result, output, error = invoke("result", "--run", str(path))
@@ -203,7 +212,7 @@ class TestTerminalDemo(unittest.TestCase):
 
     @unittest.skipUnless(HAS_TORCH, "Requires existing torch environment")
     def test_event_recomputes_with_saved_weights_and_can_report_a_miss(self):
-        for threshold, expected_text in [(1.5,"18 giây"),(3.,"không có"),(.75,"18 giây")]:
+        for threshold, expected_text in [(1.5,"18 giây"),(3.,"không có"),(.75,"18 giây"),(1.234567,"18 giây"),(2.,"không có")]:
             with self.subTest(threshold=threshold), tempfile.TemporaryDirectory() as temporary:
                 path=Path(temporary)
                 metadata_fixture(path,weights=True,threshold=threshold,
@@ -215,8 +224,17 @@ class TestTerminalDemo(unittest.TestCase):
                 self.assertEqual(result,0,error)
                 self.assertIn(expected_text,output)
                 self.assertIn("TÍNH LẠI BẰNG CHECKPOINT",output)
+                self.assertIn("Bắt đầu theo nhãn HAI: 2020-01-01 00:01:11",output)
+                self.assertIn(f"Ngưỡng cảnh báo (Q99.9): {threshold:.3f} | Sai số cao nhất: 2.000",output)
+                if threshold < 2:
+                    self.assertIn("Cảnh báo đầu trong vùng nhãn: 2020-01-01 00:01:29",output)
+                    self.assertIn("Sai số đã vượt ngưỡng cảnh báo.",output)
+                else:
+                    self.assertNotIn("Sai số đã vượt ngưỡng cảnh báo.",output)
                 self.assertNotIn("Đỉnh RMSE",output)
-                self.assertIn("Đỉnh RMSE",invoke("event","--detail","--run",str(path))[1])
+                result,detailed,error=invoke("event","--detail","--run",str(path))
+                self.assertEqual(result,0,error)
+                self.assertIn(f"tau: {threshold:.6f} | Đỉnh RMSE trong vùng nhãn: 2.000000",detailed)
                 self.assertEqual(before,snapshot(path))
 
     @unittest.skipUnless(HAS_TORCH, "Requires existing torch environment")
