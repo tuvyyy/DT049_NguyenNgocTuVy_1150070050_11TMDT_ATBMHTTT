@@ -10,6 +10,7 @@ quy trình dữ liệu, cửa sổ thời gian, huấn luyện, chọn ngưỡng
 Trong thư mục repo trên Kali, với môi trường `.venv` và run đã chuẩn bị:
 
 ```bash
+./show samples
 ./show log
 ./show result
 ./show event
@@ -17,6 +18,7 @@ Trong thư mục repo trên Kali, với môi trường `.venv` và run đã chu�
 
 | Lệnh | Thực sự làm gì? |
 | --- | --- |
+| `./show samples` | Nạp checkpoint của run, dự đoán lại 3 cửa sổ đầu tiên của train1, dài 30 mẫu và bước nhảy 5 mẫu. Hiện một tín hiệu có tên theo metadata và RMSE trên cả 79 tín hiệu; giá trị đã chuẩn hóa, không học lại. |
 | `./show log` | Đọc `train.log`, đối chiếu lịch sử CSV/JSON và SHA-256 checkpoint; không học lại. |
 | `./show result` | Đọc `evaluation.json`, đối chiếu checkpoint, ngưỡng, bảng sự kiện và bảng theo phiên; không chạy suy luận. |
 | `./show event` | Nạp `gru.pt`, dùng 79 tín hiệu HAI để tính lại RMSE quanh `test1_atk_02`, rồi đối chiếu nhãn và kết quả đã lưu. Không chạy thời gian thực. |
@@ -32,7 +34,14 @@ nguyên vẹn tới Python. Ví dụ sau cần thay `<id>` bằng tên thư mụ
 ./show event --run runs/gru/<id> --detail
 ```
 
-`--detail` hiện thêm metric, ngưỡng, đỉnh RMSE và thông tin đối chiếu.
+`./show samples --run runs/gru/<id>` dùng train1 và giới hạn dòng trong manifest/cấu hình
+của run được chọn. Lệnh cần `models/preprocessing/scaler_metadata.json`, cấu hình
+`configs/primary_gru.yaml` và PyYAML để đọc bước nhảy huấn luyện. Các giá trị được
+tính khi chạy; không dùng `demo_gru_60s.txt`, bảng kết quả hay nhãn tấn công.
+Ba mẫu dùng cùng mô hình đã lưu, không minh họa ba lần cập nhật trọng số trong quá khứ.
+
+`--detail` hiện thêm thông tin run/checkpoint; với lệnh đánh giá còn có metric,
+ngưỡng, đỉnh RMSE và thông tin đối chiếu.
 Lời thoại và checklist nằm trong [hướng dẫn giữa kỳ](docs/HUONG_DAN_GIUA_KY.md).
 
 ## Điều kiện để chạy
@@ -49,7 +58,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-lock.txt
 ```
 
-Nếu `.venv` đã chạy được thì giữ nguyên. Demo terminal cần NumPy và PyTorch;
+Nếu `.venv` đã chạy được thì giữ nguyên. Demo terminal cần NumPy, PyTorch và PyYAML;
 các lệnh `./show` không mở Streamlit và không tự huấn luyện.
 
 ## Dữ liệu HAI 21.03

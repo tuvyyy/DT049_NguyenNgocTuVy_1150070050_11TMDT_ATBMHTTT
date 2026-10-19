@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Terminal demo: read saved logs/results or recompute one event, without training."""
+"""Terminal demo: read logs/results or predict samples/an event, without training."""
 
 import argparse
 import csv
@@ -267,6 +267,107 @@ def inspect_event(run):
                 peak=float(np.max(scores[inside])), threshold=threshold, delay=delay)
 
 
+def inspect_samples(run):
+    """Predict three train1 windows from the selected run; never train or write files."""
+    import numpy as np
+    import torch
+    import yaml
+    from torch.utils.data import DataLoader
+    sys.path.insert(0, str(ROOT / "src"))
+    from gru_dataset import SessionWindowDataset
+    from gru_model import OneStepGRU
+
+    # Tên và thứ tự cột lấy từ metadata mà pipeline chuẩn hóa của dự án sử dụng.
+    metadata = read_json(ROOT / "models/preprocessing/scaler_metadata.json")
+    expect("Phiên bản HAI", metadata["dataset_version"], "21.03")
+    expect("Số tín hiệu trong metadata", metadata["feature_count"], 79)
+    expect("Kiểu dữ liệu đã chuẩn hóa", metadata["output_dtype"], "float32")
+    names = metadata["ordered_feature_names"]
+    if not isinstance(names, list) or len(names) != 79 or not all(isinstance(name, str) and name.strip() for name in names) or len(set(names)) != 79:
+        raise DemoError("Metadata phải có đúng 79 tên tín hiệu khác nhau, theo thứ tự cột đã chuẩn hóa.")
+    config = yaml.safe_load(require(ROOT / "configs/primary_gru.yaml").read_text(encoding="utf-8"))
+    stride = number(config["data"]["development_training"]["stride"], "Bước nhảy cửa sổ", integer=True)
+    expect("Bước nhảy huấn luyện hiện tại", stride, 5)
+    window = run["trained"]["window_size"]
+    expect("Cửa sổ của run", window, 30)
+    count = 3
+    required = window + (count - 1) * stride + 1
+
+    manifest = read_json(run["path"] / "data_manifest.json")
+    item = manifest.get("train1")
+    if not isinstance(item, dict) or not isinstance(item.get("files"), dict):
+        raise DemoError("data_manifest.json không có thông tin file của phiên train1.")
+    rows = number(item["rows"], "Số dòng train1 trong manifest", integer=True)
+    used = number(item["used_rows"], "Số dòng train1 đã dùng", integer=True)
+    limit = run["settings"]["row_limit"]
+    expect("Số dòng train1: manifest/cấu hình run", used, min(rows, limit) if limit else rows)
+    if used < required:
+        raise DemoError(f"train1 chỉ dùng {used} dòng; cần ít nhất {required} dòng để dự đoán {count} mẫu với cửa sổ {window}, bước nhảy {stride}.")
+    arrays = {}
+    # Chỉ đọc tín hiệu và thời gian của đúng manifest; không đọc nhãn hay scores đã lưu.
+    for name in ("features", "timestamps"):
+        if name not in item["files"]:
+            raise DemoError(f"Manifest train1 thiếu đường dẫn {name}.")
+        location = Path(item["files"][name])
+        if not location.is_absolute():
+            location = ROOT / location
+        arrays[name] = np.load(require(location), mmap_mode="r", allow_pickle=False)
+    features, times = arrays["features"], arrays["timestamps"]
+    if features.ndim != 2 or features.shape[1] != 79 or features.dtype != np.float32:
+        raise DemoError("train1: cần features float32 có 79 cột, đã chuẩn hóa bằng pipeline của dự án.")
+    expect("Số dòng train1: features/manifest", len(features), rows)
+    if times.ndim != 1 or not np.issubdtype(times.dtype, np.datetime64):
+        raise DemoError("train1: timestamps phải là mảng thời gian một chiều.")
+    expect("Số dòng train1: timestamps/manifest", len(times), rows)
+    if np.isnat(times[:used]).any() or not np.all(np.diff(times[:used]) == np.timedelta64(1, "s")):
+        raise DemoError("train1: thời gian phải liên tục từng giây và không có NaT.")
+    if not np.isfinite(features[:required]).all():
+        raise DemoError("train1: tín hiệu trong các cửa sổ được chọn chứa NaN hoặc Inf.")
+
+    # Ba cửa sổ đầu tiên theo đúng Dataset huấn luyện, không chọn mẫu theo mức sai số.
+    dataset = SessionWindowDataset([features[:required]], window_size=window, stride=stride)
+    expect("Số cửa sổ dự đoán", len(dataset), count)
+    inputs, targets = next(iter(DataLoader(dataset, batch_size=count, shuffle=False, num_workers=0)))
+    checkpoint = run["path"] / "gru.pt"
+    saved = torch.load(require(checkpoint), map_location="cpu", weights_only=True)
+    expect("Cửa sổ checkpoint/training", saved["window_size"], window)
+    expect("Seed checkpoint/training", saved["seed"], run["trained"]["seed"])
+    expect("Epoch checkpoint/training", saved["epoch"], run["trained"]["best_epoch"])
+    torch.set_num_threads(min(4, os.cpu_count() or 1))
+    model = OneStepGRU()
+    model.load_state_dict(saved["model_state_dict"])
+    model.eval()
+    with torch.no_grad():
+        predictions = model(inputs).numpy().astype(np.float64)
+    actual = targets.numpy().astype(np.float64)
+    # Cùng công thức RMSE trên 79 tín hiệu và kiểu lưu float32 như score_gru.
+    scores = np.sqrt(np.mean((actual - predictions) ** 2, axis=1)).astype(np.float32)
+    if not np.isfinite(predictions).all() or not np.isfinite(scores).all():
+        raise DemoError("Dự đoán train1 hoặc RMSE không hữu hạn; không hiển thị kết quả.")
+    expect("SHA-256 checkpoint sau suy luận samples", digest(checkpoint), run["checksum"])
+    samples = []
+    for index, (_, start) in enumerate(dataset.indices):
+        samples.append(dict(start=times[start], end=times[start + window - 1], time=times[start + window],
+                            predicted=float(predictions[index, 0]), actual=float(actual[index, 0]), rmse=float(scores[index])))
+    return dict(signal=names[0], window=window, stride=stride, samples=samples)
+
+
+def show_samples(run, measured, detail=False):
+    print("DỰ ĐOÁN THỰC TẾ BẰNG GRU | HAI 21.03 | train1")
+    print(f"Tín hiệu: {measured['signal']} | Đơn vị hiển thị: giá trị đã chuẩn hóa.")
+    print(f"Cửa sổ {measured['window']} mẫu, mỗi mẫu 1 giây | Bước nhảy: {measured['stride']} mẫu.")
+    for index, sample in enumerate(measured["samples"], 1):
+        start, end, target = (str(sample[key].astype("datetime64[s]")).replace("T", " ") for key in ("start", "end", "time"))
+        print()
+        print(f"Mẫu {index} | Đầu vào ({measured['window']} giây): {start} -> {end}")
+        print(f"Dự đoán tại: {target}")
+        print(f"GRU dự đoán: {sample['predicted']:.6f} | HAI thực tế: {sample['actual']:.6f} | RMSE (79 tín hiệu): {sample['rmse']:.6f}")
+    if detail:
+        print(f"\nRun: {run['path']} | seed {run['settings']['seed']} | checkpoint: gru.pt | SHA-256 khớp.")
+        print("Nguồn: train1 trong data_manifest.json; tên cột theo scaler_metadata.json.")
+    print("\nĐã tính dự đoán bằng mô hình GRU được huấn luyện trước đó. Đây không phải quá trình huấn luyện lại.")
+
+
 def show_log(run, detail=False):
     logs = run["logs"]
     print(f"ĐỌC LOG ĐÃ LƯU | seed {run['settings']['seed']} | {len(logs)} epoch")
@@ -374,7 +475,7 @@ def auxiliary(mode):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=["log", "result", "event", "timeline", "all", "seeds", "benchmark-log", "benchmark-threshold", "1", "2", "3", "4"])
+    parser.add_argument("mode", choices=["samples", "log", "result", "event", "timeline", "all", "seeds", "benchmark-log", "benchmark-threshold", "1", "2", "3", "4"])
     parser.add_argument("--run", type=Path, default=os.environ.get("DT049_RUN"), help="Run đã lưu; mặc định lấy DT049_RUN do ./show thiết lập. Không tự chọn run mới nhất.")
     parser.add_argument("--event", default=EVENT, help="Mặc định test1_atk_02.")
     parser.add_argument("--detail", action="store_true", help="Thêm metric, ngưỡng, RMSE và thông tin đối chiếu.")
@@ -388,6 +489,9 @@ def main(argv=None):
             raise DemoError("Chưa chỉ định run. Dùng ./show hoặc truyền --run THƯ_MỤC_RUN; không tự chọn run thay thế.")
         path = args.run if args.run.is_absolute() else ROOT / args.run
         run = load_run(path)
+        if mode == "samples":
+            show_samples(run, inspect_samples(run), args.detail)
+            return 0
         if mode in ("log", "all"): load_log(run)
         if mode in ("result", "event", "timeline", "all"): load_result(run, args.event)
         measured = inspect_event(run) if mode in ("event", "timeline", "all") else None
