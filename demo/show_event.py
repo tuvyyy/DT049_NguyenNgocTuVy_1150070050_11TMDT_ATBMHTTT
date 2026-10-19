@@ -170,10 +170,14 @@ def score_window(checkpoint, features, expected=None):
     model.eval()
     loader = DataLoader(SessionWindowDataset([features], window_size=30, stride=1), batch_size=512, shuffle=False, num_workers=0)
     parts = []
+    # Chỉ dự đoán bằng mô hình đã lưu; no_grad tắt tính gradient, không điều chỉnh trọng số.
     with torch.no_grad():
         for inputs, targets in loader:
+            # Dự đoán 79 giá trị tín hiệu kế tiếp từ cửa sổ 30 mẫu quá khứ.
             predictions = model(inputs).numpy().astype(np.float64)
+            # So giá trị thật với dự đoán; targets ở đây là tín hiệu thật, không phải nhãn.
             differences = targets.numpy().astype(np.float64) - predictions
+            # RMSE mỗi thời điểm: bình phương chênh lệch, lấy trung bình 79 tín hiệu, rồi căn.
             parts.append(np.sqrt(np.mean(differences ** 2, axis=1)).astype(np.float32))
     return np.concatenate(parts)
 
@@ -208,6 +212,7 @@ def inspect_event(run):
         raise DemoError("Timestamp không hợp lệ.")
     if not np.all(np.diff(times) == np.timedelta64(1, "s")) or not np.isin(labels, [0, 1]).all():
         raise DemoError("Phiên kiểm thử phải liên tục mỗi giây và nhãn phải là 0/1.")
+    # Nhãn chỉ xác định khoảng để đối chiếu; ví dụ atk_02 là khoảng tấn công thứ hai của phiên.
     edges = np.diff(np.pad(np.asarray(labels, dtype=np.int8), (1, 1)))
     starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1) - 1
     if ordinal > len(starts):
@@ -222,17 +227,25 @@ def inspect_event(run):
     window = features[first_target - 30:last_target + 1]
     if not np.isfinite(window).all():
         raise DemoError("Features quanh sự kiện chứa NaN hoặc Inf.")
+    # Tính RMSE thật bằng checkpoint + tín hiệu; không đưa labels vào GRU.
     scores = score_window(path / "gru.pt", window, expected=run["trained"])
     expect("SHA-256 checkpoint sau suy luận", digest(path / "gru.pt"), run["checksum"])
     targets = np.asarray(times[first_target:last_target + 1])
     if not np.isfinite(scores).all() or len(scores) != len(targets):
         raise DemoError("RMSE tính lại không hữu hạn hoặc lệch số dòng.")
+    # ĐIỂM 3 — GIỜ CẢNH BÁO VÀ ĐỘ TRỄ của case đã chọn.
+    # inside chỉ chọn các mốc nằm trong khoảng nhãn HAI để đối chiếu sau suy luận.
     inside = (targets >= start) & (targets <= end)
+    # Đọc ngưỡng của đúng lần chạy đã lưu, không dùng một số cố định.
     threshold = run["trained"]["threshold"]
+    # Lấy vị trí các giây vừa nằm trong khoảng nhãn, vừa có RMSE vượt ngưỡng.
     alarms = np.flatnonzero(inside & (scores > threshold))
+    # Lấy giờ vượt ngưỡng ĐẦU TIÊN theo thời gian, không lấy giờ có sai số cao nhất.
     first = targets[alarms[0]] if len(alarms) else None
     if bool(len(alarms)) != event["is_detected"]:
         raise DemoError("Trạng thái vượt ngưỡng tính lại khác kết quả ghép sự kiện đã lưu. Cần kiểm tra ghép 1–1 trên toàn phiên; không kết luận thành công.")
+    # Độ trễ = giờ cảnh báo đầu - mốc bắt đầu được đánh giá, đổi ra giây.
+    # Mốc này là đầu nhãn, hoặc dòng 30 nếu nhãn bắt đầu khi chưa đủ lịch sử GRU.
     delay = float((first - times[max(30, start_index)]) / np.timedelta64(1, "s")) if first is not None else None
     if first is not None:
         close("Độ trễ tính lại/CSV", float(event["delay_seconds"]), delay)
@@ -249,6 +262,7 @@ def inspect_event(run):
             if "attack" in cached and not np.array_equal(cached["attack"][indices], labels[first_target:last_target + 1]):
                 raise DemoError("Nhãn trong scores đã lưu không khớp nhãn dữ liệu.")
     run["event"] = event
+    # peak chỉ mô tả sai số cao nhất trong khoảng nhãn; không dùng để tính first hay delay.
     return dict(times=targets, scores=scores, inside=inside, first=first, start=start, end=end,
                 peak=float(np.max(scores[inside])), threshold=threshold, delay=delay)
 
@@ -278,20 +292,39 @@ def show_result(run, detail=False):
 
 
 def show_event(run, measured, detail=False):
-    print(f"TÍNH LẠI BẰNG CHECKPOINT | {run['event_id']}")
-    print(f"Bắt đầu theo nhãn HAI: {run['event']['orig_start']}")
+    import numpy as np
+    event = run["event"]
+    total = sum(row["session"] == event["session"] for row in run["events"])
+    # Dữ liệu đã được kiểm tra cách nhau một giây; tính cả mốc đầu và mốc cuối.
+    duration = int((measured["end"] - measured["start"]) / np.timedelta64(1, "s")) + 1
+    start = str(measured["start"].astype("datetime64[s]")).replace("T", " ")
+    first = str(measured["first"].astype("datetime64[s]")).replace("T", " ") if measured["first"] is not None else None
+    print(f"MINH HỌA 1 TRONG {total} SỰ KIỆN | {run['event_id']}")
+    print("Sử dụng mô hình GRU đã lưu.")
+    print()
+    print(f"Tấn công bắt đầu: {start if detail else start[11:]}")
     if measured['first'] is None:
-        print("Cảnh báo trong vùng nhãn: không có | Độ trễ: không áp dụng")
-        print("Kết luận: không khớp sự kiện nhãn HAI.")
+        print("GRU cảnh báo đầu tiên: không có")
+        print("Thời gian phát hiện: không có")
     else:
-        print(f"Cảnh báo đầu trong vùng nhãn: {str(measured['first'].astype('datetime64[s]')).replace('T', ' ')}")
-        print(f"Độ trễ: {measured['delay']:g} giây | Kết luận: sai số bất thường khớp nhãn HAI.")
-    print(f"Ngưỡng cảnh báo (Q99.9): {measured['threshold']:.3f} | Sai số cao nhất: {measured['peak']:.3f}")
-    if measured['peak'] > measured['threshold']:
-        print("Sai số đã vượt ngưỡng cảnh báo.")
+        print(f"GRU cảnh báo đầu tiên: {first if detail else first[11:]}")
+        print(f"Thời gian phát hiện: {measured['delay']:g} giây")
+    print()
+    print(f"Ngưỡng Tau: {measured['threshold']:.3f}")
+    print(f"Sai số cao nhất trong {duration} giây: {measured['peak']:.3f}")
+    print()
+    if measured['first'] is None:
+        print("Kết luận: không có cảnh báo bất thường")
+    else:
+        print("Kết luận: GRU phát hiện bất thường")
+    print("trong thời gian xảy ra tấn công.")
     if detail:
-        print(f"Kết thúc theo nhãn: {run['event']['orig_end']}")
+        print()
+        print(f"Run: {run['path']} | seed {run['settings']['seed']}")
+        print(f"Kết thúc theo nhãn HAI: {event['orig_end']}")
         print(f"tau: {measured['threshold']:.6f} | Đỉnh RMSE trong vùng nhãn: {measured['peak']:.6f}")
+        print("Ngưỡng Q99.9 lấy từ sai số train3 của lần chạy này.")
+        print("SHA-256 checkpoint khớp trước và sau suy luận.")
         print("Đầu vào GRU chỉ có 79 tín hiệu; nhãn chỉ dùng đối chiếu sau suy luận.")
 
 

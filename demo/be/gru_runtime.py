@@ -214,16 +214,20 @@ def train(path, settings, logger):
     def array(session):
         item = manifest[session]
         return np.load(item["files"]["features"], mmap_mode="r", allow_pickle=False)[:item["used_rows"]]
+    # Demo học từ tín hiệu bình thường train1 + train2; train3 dùng kiểm tra và chọn ngưỡng.
     training = [array("train1"), array("train2")]
     validation = array("train3")
     device = torch.device("cpu")
     checkpoint = path / "gru.pt"
+    # Chạy nhanh và benchmark đều dùng hàm học này; số dòng/vòng học tùy cấu hình.
     result = train_single_run(30, settings["seed"], training, [validation], config, checkpoint, logger, device)
     model = OneStepGRU().to(device)
     model.load_state_dict(torch.load(checkpoint, map_location=device, weights_only=True)["model_state_dict"])
     loader = DataLoader(SessionWindowDataset([validation], window_size=30, stride=1), batch_size=512, shuffle=False)
     logger.info("CALIBRATE | normal train3 | stride=1 | Q99.9")
     _, scores = evaluate_model_on_loader(model, loader, device)
+    # Q99.9 là phân vị 99,9% của sai số trên train3 bình thường, không phải độ chính xác.
+    # Tính ngưỡng riêng cho lần chạy này; không lấy ngưỡng benchmark gán vào demo nhanh.
     result["threshold"] = float(np.quantile(scores, 0.999, method="linear"))
     result["checkpoint_sha256"] = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
     result["profile"] = "quick" if settings["row_limit"] else "full"
@@ -255,14 +259,24 @@ def evaluate(path, settings, logger):
     for session in sessions:
         logger.info("EVALUATE %s | checkpoint=%s | threshold=%.8f", session, checkpoint.name, threshold)
         data = {key: np.load(file, mmap_mode="r", allow_pickle=False) for key, file in manifest[session]["files"].items()}
+        # ĐIỂM 2 — KIỂM THỬ: dùng mô hình đã lưu để tính sai số, không học lại.
+        # GRU chỉ nhận 79 tín hiệu; score_gru trả RMSE ở từng thời điểm.
         scores = score_gru(data["features"], model, torch.device("cpu"))
+        # Bỏ 30 mốc đầu vì GRU cần 30 mẫu quá khứ để dự đoán mẫu tiếp theo.
         times = data["timestamps"][30:]
         attacks = data["attack"][30:]
+        # Sai số lớn hơn ngưỡng tau thì cảnh báo; chưa kết luận đó là tấn công.
         is_alarm = scores > threshold
+        # Nhãn HAI chỉ dùng ĐỐI CHIẾU: lấy các khoảng tấn công đã được ghi trong dữ liệu.
         gt = extract_ground_truth_events(session, data["timestamps"], data["attack"], data["attack_P1"], data["attack_P2"], data["attack_P3"])
         eligible = [item for item in gt if item["evaluable"]]
+        # Các giây vượt ngưỡng liên tiếp được gom thành một sự kiện cảnh báo.
         alarms = extract_predicted_alarm_events(session, "gru_demo", scores, threshold, times)
+        # Đếm các đợt cảnh báo nằm trong vùng có nhãn bình thường.
         normal_fa = extract_normal_false_alarm_events(session, is_alarm, attacks, times)
+        # Ghép 1-1 theo thời gian: một cảnh báo chỉ được ghép với tối đa một sự kiện nhãn.
+        # Kết quả ghép cho biết số sự kiện khớp nhãn và số sự kiện bị bỏ sót.
+        # Khớp đủ 5/5 sự kiện vẫn có thể còn cảnh báo thừa, không có nghĩa chính xác 100%.
         matched = match_events_one_to_one(eligible, alarms, is_alarm, times)
         values = dict(tp=matched["tp_count"], fn=matched["fn_count"], fp=matched["fp_count"], alarms=len(alarms), normal_fa=len(normal_fa), normal_samples=int(np.sum(attacks == 0)))
         for key, value in values.items():

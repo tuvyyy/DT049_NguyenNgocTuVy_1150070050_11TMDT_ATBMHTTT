@@ -187,11 +187,14 @@ def train_single_run(
         num_layers=config["model"]["num_layers"],
     ).to(device)
 
+    # Adam là cách cập nhật các trọng số (những con số mô hình học được).
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=float(config["training"]["learning_rate"]),
         weight_decay=float(config["training"]["weight_decay"]),
     )
+    # MSE: trung bình bình phương chênh lệch giữa dự đoán và giá trị thật.
+    # Đây là lỗi dùng để HỌC; lúc cảnh báo, chương trình dùng RMSE = căn bậc hai của MSE.
     criterion = nn.MSELoss()
     max_norm = float(config["training"]["gradient_clipping_max_norm"])
     patience = config["training"]["early_stopping_patience"]
@@ -207,6 +210,9 @@ def train_single_run(
 
     logger.info(f"--- Starting Run: W={W}, Seed={seed} (Train Windows: {len(train_ds):,}, Val Windows: {len(val_ds):,}) ---")
 
+    # ĐIỂM 1 — GRU HỌC: dự đoán -> tính sai số -> điều chỉnh trọng số.
+    # Hàm train_single_run lặp ba bước này trên từng nhóm mẫu.
+    # Một epoch (vòng học) là một lượt qua các cửa sổ dữ liệu huấn luyện.
     for epoch in range(1, max_epochs + 1):
         # Training Phase
         model.train()
@@ -214,14 +220,22 @@ def train_single_run(
         train_samples = 0
         t0_epoch = time.time()
 
+        # Mỗi lượt lấy một nhóm mẫu: bx là các cửa sổ W thời điểm quá khứ;
+        # by là 79 giá trị tín hiệu thật ở thời điểm kế tiếp, KHÔNG phải nhãn tấn công.
         for bx, by in train_loader:
             bx = bx.to(device)
             by = by.to(device)
+            # Xóa phần tính điều chỉnh của nhóm trước, không xóa trọng số đã học.
             optimizer.zero_grad()
+            # 1. DỰ ĐOÁN: GRU nhìn bx và thử đoán 79 giá trị kế tiếp.
             pred = model(bx)
+            # 2. TÍNH SAI SỐ: so dự đoán pred với giá trị thật by bằng MSE.
             loss = criterion(pred, by)
+            # Tính gradient: mỗi trọng số ảnh hưởng đến lỗi ra sao; chưa cập nhật trọng số.
             loss.backward()
+            # Giới hạn độ lớn gradient để tránh cập nhật quá mạnh; không phải ngưỡng cảnh báo.
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
+            # 3. ĐIỀU CHỈNH: Adam dùng gradient để cập nhật trọng số, nhằm giảm lỗi.
             optimizer.step()
 
             train_loss_sum += loss.item() * len(by)
@@ -233,6 +247,7 @@ def train_single_run(
 
         # Validation Phase (stride=5)
         t0_val = time.time()
+        # Kiểm tra lỗi trên dữ liệu validation; hàm này không cập nhật trọng số.
         val_rmse, _ = evaluate_model_on_loader(model, val_loader, device)
         val_dur = time.time() - t0_val
         total_val_time += val_dur
@@ -250,7 +265,7 @@ def train_single_run(
             best_val_rmse = val_rmse
             best_epoch = epoch
             patience_counter = 0
-            # Save checkpoint
+            # Lưu mô hình có lỗi validation tốt nhất, không mặc định lấy vòng cuối.
             torch.save(
                 {
                     "epoch": epoch,

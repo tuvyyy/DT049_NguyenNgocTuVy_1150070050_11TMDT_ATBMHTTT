@@ -40,7 +40,7 @@ def write_csv(path, rows):
         writer.writerows(rows)
 
 
-def metadata_fixture(path, *, seed=42, epochs=3, threshold=1.5, row_limit=10000, weights=False):
+def metadata_fixture(path, *, seed=42, epochs=3, threshold=1.5, row_limit=10000, weights=False, third=False):
     """Synthetic artifact consistency fixture, never presented as HAI results."""
     if weights:
         import torch
@@ -59,35 +59,44 @@ def metadata_fixture(path, *, seed=42, epochs=3, threshold=1.5, row_limit=10000,
     write_json(path / "training.json", dict(seed=seed, best_epoch=epochs, window_size=30, history=history,
                checkpoint_sha256=checksum, profile="quick" if row_limit else "full", total_epochs=epochs, threshold=threshold))
     detected = threshold < 2
+    count = 3 if third else 2
     result = dict(checkpoint_sha256=checksum, threshold=threshold, seed=seed, sessions=["test1"],
-                  tp=2 if detected else 0, fn=0 if detected else 2, fp=0, alarms=2 if detected else 0,
+                  tp=count if detected else 0, fn=0 if detected else count, fp=0, alarms=count if detected else 0,
                   event_precision=1.0 if detected else 0., event_recall=1.0 if detected else 0.,
-                  event_f1=1.0 if detected else 0., normal_fa=0, normal_samples=67,
-                  normal_fa_events_per_hour=0., median_delay_sec=9. if detected else None)
+                  event_f1=1.0 if detected else 0., normal_fa=0, normal_samples=101 if third else 67,
+                  normal_fa_events_per_hour=0., median_delay_sec=(7. if third else 9.) if detected else None)
     write_json(path / "evaluation.json", result)
     write_csv(path / "per_session.csv", [dict(session="test1", **{key:result[key] for key in ("tp","fn","fp","alarms","normal_fa","normal_samples")})])
+    intervals = [(1,START-np.timedelta64(36,"s"),START-np.timedelta64(32,"s"),0), (2,START,END,18)]
+    if third:
+        intervals.append((3,START+np.timedelta64(114,"s"),START+np.timedelta64(139,"s"),7))
     events = [dict(attack_event_id=f"test1_atk_{i:02d}", session="test1", orig_start=str(start).replace("T"," "),
                    orig_end=str(end).replace("T"," "), detected=detected, delay_seconds=delay if detected else "")
-              for i,start,end,delay in [(1,START-np.timedelta64(36,"s"),START-np.timedelta64(32,"s"),0), (2,START,END,18)]]
+              for i,start,end,delay in intervals]
     write_csv(path / "attack_events.csv", events)
     (path / "train.log").write_text("\n".join(f"Epoch {row['epoch']}/{epochs} | Train Loss: {row['train_loss_mse']:.6f} | saved test log" for row in history), encoding="utf-8")
     write_csv(path / "training_history.csv", history)
     if weights:
         source = path / "input"
         source.mkdir()
-        times = np.datetime64("2020-01-01T00:00:00") + np.arange(200).astype("timedelta64[s]")
-        labels = np.zeros(200, dtype=np.int8)
+        rows = 260 if third else 200
+        times = np.datetime64("2020-01-01T00:00:00") + np.arange(rows).astype("timedelta64[s]")
+        labels = np.zeros(rows, dtype=np.int8)
         labels[35:40] = 1
         labels[71:169] = 1
-        features = np.zeros((200,79), dtype=np.float32)
+        features = np.zeros((rows,79), dtype=np.float32)
         features[35:40] = 2
         features[89:130] = 2
+        if third:
+            labels[185:211] = 1
+            features[192:211] = 2
+            features[200] = 4  # peak occurs later than the first threshold crossing
         files = {}
         for name, values in dict(features=features, timestamps=times, attack=labels).items():
             target = source / f"test1_{name}.npy"
             np.save(target, values, allow_pickle=False)
             files[name] = str(target)
-        write_json(path / "data_manifest.json", dict(test1=dict(rows=200, used_rows=200, files=files)))
+        write_json(path / "data_manifest.json", dict(test1=dict(rows=rows, used_rows=rows, files=files)))
         np.savez(path / "scores_test1.npz", timestamps=times[30:], scores=np.sqrt(np.mean(features[30:].astype(np.float64)**2,axis=1)).astype(np.float32), attack=labels[30:])
 
 
@@ -212,7 +221,7 @@ class TestTerminalDemo(unittest.TestCase):
 
     @unittest.skipUnless(HAS_TORCH, "Requires existing torch environment")
     def test_event_recomputes_with_saved_weights_and_can_report_a_miss(self):
-        for threshold, expected_text in [(1.5,"18 giây"),(3.,"không có"),(.75,"18 giây"),(1.234567,"18 giây"),(2.,"không có")]:
+        for threshold, expected_text in [(1.5,"18 giây"),(3.,"không có"),(.75,"18 giây"),(1.234567,"18 giây"),(2.,"không có"),(1.9999996,"18 giây")]:
             with self.subTest(threshold=threshold), tempfile.TemporaryDirectory() as temporary:
                 path=Path(temporary)
                 metadata_fixture(path,weights=True,threshold=threshold,
@@ -223,19 +232,81 @@ class TestTerminalDemo(unittest.TestCase):
                 result,output,error=invoke("event","--run",str(path))
                 self.assertEqual(result,0,error)
                 self.assertIn(expected_text,output)
-                self.assertIn("TÍNH LẠI BẰNG CHECKPOINT",output)
-                self.assertIn("Bắt đầu theo nhãn HAI: 2020-01-01 00:01:11",output)
-                self.assertIn(f"Ngưỡng cảnh báo (Q99.9): {threshold:.3f} | Sai số cao nhất: 2.000",output)
+                self.assertIn("MINH HỌA 1 TRONG 2 SỰ KIỆN | test1_atk_02",output)
+                self.assertIn("Sử dụng mô hình GRU đã lưu.",output)
+                self.assertIn("Tấn công bắt đầu: 00:01:11",output)
+                self.assertNotIn("2020-01-01",output)
+                self.assertIn(f"Ngưỡng Tau: {threshold:.3f}",output)
+                self.assertIn("Sai số cao nhất trong 98 giây: 2.000",output)
                 if threshold < 2:
-                    self.assertIn("Cảnh báo đầu trong vùng nhãn: 2020-01-01 00:01:29",output)
-                    self.assertIn("Sai số đã vượt ngưỡng cảnh báo.",output)
+                    self.assertIn("GRU cảnh báo đầu tiên: 00:01:29",output)
+                    self.assertIn("Kết luận: GRU phát hiện bất thường",output)
                 else:
-                    self.assertNotIn("Sai số đã vượt ngưỡng cảnh báo.",output)
+                    self.assertIn("GRU cảnh báo đầu tiên: không có",output)
+                    self.assertIn("Thời gian phát hiện: không có",output)
+                    self.assertNotIn("Thời gian phát hiện: 0",output)
+                    self.assertIn("Kết luận: không có cảnh báo bất thường",output)
+                    self.assertNotIn("Kết luận: GRU phát hiện bất thường",output)
                 self.assertNotIn("Đỉnh RMSE",output)
                 result,detailed,error=invoke("event","--detail","--run",str(path))
                 self.assertEqual(result,0,error)
+                self.assertIn("Tấn công bắt đầu: 2020-01-01 00:01:11",detailed)
+                self.assertIn("Kết thúc theo nhãn HAI: 2020-01-01 00:02:48",detailed)
+                self.assertIn("SHA-256 checkpoint khớp",detailed)
+                self.assertIn("nhãn chỉ dùng đối chiếu sau suy luận",detailed)
                 self.assertIn(f"tau: {threshold:.6f} | Đỉnh RMSE trong vùng nhãn: 2.000000",detailed)
                 self.assertEqual(before,snapshot(path))
+
+    def test_event_display_counts_only_its_session_and_handles_midnight(self):
+        run = dict(event_id="test2_atk_03", event=dict(session="test2", orig_end="2020-01-02 00:00:02"),
+                   events=[dict(session="test1") for _ in range(5)] + [dict(session="test2") for _ in range(3)])
+        measured = dict(start=np.datetime64("2020-01-01T23:59:58"), end=np.datetime64("2020-01-02T00:00:02"),
+                        first=np.datetime64("2020-01-02T00:00:00"), delay=2., threshold=1.234567, peak=2.345678)
+        output = io.StringIO()
+        with redirect_stdout(output):
+            cli.show_event(run, measured)
+        text = output.getvalue()
+        self.assertIn("MINH HỌA 1 TRONG 3 SỰ KIỆN | test2_atk_03",text)
+        self.assertIn("Tấn công bắt đầu: 23:59:58",text)
+        self.assertIn("GRU cảnh báo đầu tiên: 00:00:00",text)
+        self.assertIn("Thời gian phát hiện: 2 giây",text)
+        self.assertIn("Ngưỡng Tau: 1.235",text)
+        self.assertIn("Sai số cao nhất trong 5 giây: 2.346",text)
+
+    @unittest.skipUnless(HAS_TORCH and BASH and Path(BASH).is_file(), "Requires existing torch environment and Bash")
+    def test_four_event_commands_use_saved_checkpoint_through_launcher(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for directory in ("demo", "src"):
+                (root / directory).mkdir()
+            for name in ("show", "demo/show_event.py", "src/gru_model.py", "src/gru_dataset.py"):
+                shutil.copyfile(ROOT / name, root / name)
+            interpreter = root / ".venv/bin/python"
+            interpreter.parent.mkdir(parents=True)
+            interpreter.write_text("#!/usr/bin/env bash\nexec " + shlex.quote(sys.executable.replace("\\", "/")) + " \"$@\"\n", encoding="utf-8")
+            interpreter.chmod(0o755)
+            run = root / "synthetic run"
+            run.mkdir()
+            metadata_fixture(run, weights=True, third=True)
+            before = snapshot(root)
+            env = {**os.environ, "PYTHONUTF8": "1", "DT049_RUN": str(run)}
+            cases = [
+                (["event"], "02", "00:01:11", "00:01:29", 18, 98, 2.),
+                (["event", "--detail"], "02", "2020-01-01 00:01:11", "2020-01-01 00:01:29", 18, 98, 2.),
+                (["event", "--event", "test1_atk_01"], "01", "00:00:35", "00:00:35", 0, 5, 2.),
+                (["event", "--event", "test1_atk_03"], "03", "00:03:05", "00:03:12", 7, 26, 4.),
+            ]
+            for arguments, ordinal, start, first, delay, duration, peak in cases:
+                with self.subTest(command="./show " + " ".join(arguments)):
+                    result = subprocess.run([BASH, str(root / "show"), *arguments], capture_output=True, text=True,
+                                            encoding="utf-8", env=env, timeout=60)
+                    self.assertEqual(result.returncode,0,result.stderr)
+                    self.assertIn(f"MINH HỌA 1 TRONG 3 SỰ KIỆN | test1_atk_{ordinal}",result.stdout)
+                    self.assertIn(f"Tấn công bắt đầu: {start}",result.stdout)
+                    self.assertIn(f"GRU cảnh báo đầu tiên: {first}",result.stdout)
+                    self.assertIn(f"Thời gian phát hiện: {delay} giây",result.stdout)
+                    self.assertIn(f"Sai số cao nhất trong {duration} giây: {peak:.3f}",result.stdout)
+            self.assertEqual(before,snapshot(root))
 
     @unittest.skipUnless(HAS_TORCH, "Requires existing torch environment")
     def test_event_missing_and_time_data_score_mismatches_stop(self):
