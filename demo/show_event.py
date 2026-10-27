@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Terminal demo: read logs/results or predict samples/an event, without training."""
 
+# TERMINAL: đọc kết quả đã lưu hoặc dùng checkpoint để dự đoán lại, không huấn luyện.
+# log/result đọc file; samples/event chạy suy luận bằng mô hình GRU đã lưu.
+# Cảnh báo dựa trên sai số dự đoán vượt ngưỡng; nhãn HAI chỉ dùng để đối chiếu.
+
 import argparse
 import csv
 import hashlib
@@ -62,11 +66,13 @@ def close(name, actual, expected):
 
 
 def digest(path):
+    # SHA-256 là dấu kiểm tra nội dung file, dùng phát hiện checkpoint bị thay đổi.
     return hashlib.sha256(require(path).read_bytes()).hexdigest()
 
 
 def load_run(path):
     """Read metadata and verify checkpoint bytes; do not load a model or infer."""
+    # settings ghi thông số đã chọn; training ghi kết quả học, ngưỡng và dấu kiểm tra model.
     settings, trained = (read_json(path / name) for name in ("settings.json", "training.json"))
     checksum = digest(path / "gru.pt")
     expect("SHA-256 checkpoint/training.json", checksum, trained["checkpoint_sha256"])
@@ -88,6 +94,7 @@ def load_run(path):
 
 def load_log(run):
     """Validate actual saved epoch lines against CSV and training metadata."""
+    # Đọc các vòng học đã xảy ra, kiểm tra log/CSV/JSON khớp nhau; không chạy lại vòng học.
     history = read_csv(run["path"] / "training_history.csv")
     text = require(run["path"] / "train.log").read_text(encoding="utf-8")
     logs = re.findall(r"Epoch\s+(\d+)/(\d+)\s*\|\s*Train Loss:\s*([0-9.eE+-]+)", text)
@@ -107,6 +114,7 @@ def load_log(run):
 
 def load_result(run, event_id=EVENT):
     """Check saved evaluation, its checkpoint/threshold, counts and event rows."""
+    # Nạp kết quả đánh giá của đúng run; kiểm tra số sự kiện, ngưỡng và checkpoint tương ứng.
     result = read_json(run["path"] / "evaluation.json")
     expect("SHA-256 evaluation/checkpoint", result["checkpoint_sha256"], run["checksum"])
     expect("Ngưỡng evaluation/training", result["threshold"], run["trained"]["threshold"])
@@ -160,14 +168,17 @@ def score_window(checkpoint, features, expected=None):
     from gru_dataset import SessionWindowDataset
     from gru_model import OneStepGRU
     torch.set_num_threads(min(4, os.cpu_count() or 1))
+    # Nạp file trọng số đã học lên CPU; đối chiếu cửa sổ, seed và vòng học của checkpoint.
     saved = torch.load(checkpoint, map_location="cpu", weights_only=True)
     expect("Cửa sổ checkpoint", saved["window_size"], 30)
     if expected is not None:
         expect("Seed checkpoint/training", saved["seed"], expected["seed"])
         expect("Epoch checkpoint/training", saved["epoch"], expected["best_epoch"])
     model = OneStepGRU()
+    # Khôi phục trọng số đã học vào đúng kiến trúc GRU, rồi chuyển sang chế độ dự đoán.
     model.load_state_dict(saved["model_state_dict"])
     model.eval()
+    # Mỗi mẫu dùng 30 thời điểm để đoán thời điểm kế tiếp; stride=1 tạo RMSE từng giây.
     loader = DataLoader(SessionWindowDataset([features], window_size=30, stride=1), batch_size=512, shuffle=False, num_workers=0)
     parts = []
     # Chỉ dự đoán bằng mô hình đã lưu; no_grad tắt tính gradient, không điều chỉnh trọng số.
@@ -184,6 +195,7 @@ def score_window(checkpoint, features, expected=None):
 
 def inspect_event(run):
     import numpy as np
+    # Mã test1_atk_02 xác định phiên test1 và khoảng nhãn tấn công thứ hai của phiên đó.
     event_id, path = run["event_id"], run["path"]
     match = re.fullmatch(r"(test[1-5])_atk_(\d{2,})", event_id)
     if not match or int(match[2]) < 1:
@@ -193,6 +205,7 @@ def inspect_event(run):
     if len(rows) != 1:
         raise DemoError(f"Không tìm thấy sự kiện {event_id} trong kết quả của run đã chọn.")
     event = rows[0]
+    # Manifest chỉ tới các mảng dữ liệu thực tế đã dùng trong lần chạy được chọn.
     manifest = read_json(path / "data_manifest.json")
     files = manifest[session]["files"]
     arrays = {}
@@ -223,6 +236,7 @@ def inspect_event(run):
         expect(f"{field}: CSV/nhãn HAI", np.datetime64(event[field]), measured)
     if end_index < 30:
         raise DemoError("Sự kiện nằm trước mốc đánh giá chung W=30.")
+    # Tính thêm tối đa 10 giây hai bên để vẽ timeline; vẫn cần 30 mẫu lịch sử cho dự đoán đầu.
     first_target, last_target = max(30, start_index - 10), min(len(times) - 1, end_index + 10)
     window = features[first_target - 30:last_target + 1]
     if not np.isfinite(window).all():
@@ -242,6 +256,7 @@ def inspect_event(run):
     alarms = np.flatnonzero(inside & (scores > threshold))
     # Lấy giờ vượt ngưỡng ĐẦU TIÊN theo thời gian, không lấy giờ có sai số cao nhất.
     first = targets[alarms[0]] if len(alarms) else None
+    # Nếu khác trạng thái ghép sự kiện đã lưu thì dừng, không tự sửa số để báo thành công.
     if bool(len(alarms)) != event["is_detected"]:
         raise DemoError("Trạng thái vượt ngưỡng tính lại khác kết quả ghép sự kiện đã lưu. Cần kiểm tra ghép 1–1 trên toàn phiên; không kết luận thành công.")
     # Độ trễ = giờ cảnh báo đầu - mốc bắt đầu được đánh giá, đổi ra giây.
@@ -251,6 +266,7 @@ def inspect_event(run):
         close("Độ trễ tính lại/CSV", float(event["delay_seconds"]), delay)
     stored = path / f"scores_{session}.npz"
     if stored.is_file():
+        # Scores đã lưu chỉ để kiểm tra chéo với RMSE vừa tính, không thay thế dự đoán thật.
         with np.load(stored, allow_pickle=False) as cached:
             indices = np.searchsorted(cached["timestamps"], targets)
             if np.any(indices >= len(cached["timestamps"])) or not np.array_equal(cached["timestamps"][indices], targets):
@@ -269,6 +285,7 @@ def inspect_event(run):
 
 def inspect_samples(run):
     """Predict three train1 windows from the selected run; never train or write files."""
+    # Minh họa dự đoán trên train1 bằng cùng checkpoint; không phải ba lần cập nhật mô hình.
     import numpy as np
     import torch
     import yaml
@@ -347,6 +364,7 @@ def inspect_samples(run):
     expect("SHA-256 checkpoint sau suy luận samples", digest(checkpoint), run["checksum"])
     samples = []
     for index, (_, start) in enumerate(dataset.indices):
+        # Chỉ hiển thị tín hiệu ở cột đầu theo metadata; RMSE phía trên vẫn dùng đủ 79 cột.
         samples.append(dict(start=times[start], end=times[start + window - 1], time=times[start + window],
                             predicted=float(predictions[index, 0]), actual=float(actual[index, 0]), rmse=float(scores[index])))
     return dict(signal=names[0], window=window, stride=stride, samples=samples)
@@ -393,6 +411,7 @@ def show_result(run, detail=False):
 
 
 def show_event(run, measured, detail=False):
+    # Chỉ trình bày số đã tính trong inspect_event; các dòng print không quyết định cảnh báo.
     import numpy as np
     event = run["event"]
     total = sum(row["session"] == event["session"] for row in run["events"])
@@ -455,6 +474,7 @@ def show_timeline(measured):
 
 
 def auxiliary(mode):
+    # Các mục benchmark đọc bộ kết quả chính thức, tách khỏi ngưỡng/kết quả của run demo.
     if mode == "seeds":
         rows = [r for r in read_csv(ROOT / "results/metrics/final_test_summary.csv") if r["model_id"] in ("gru_seed42", "gru_seed43", "gru_seed44")]
         expect("Số seed trong benchmark", len(rows), 3)
@@ -474,6 +494,7 @@ def auxiliary(mode):
 
 
 def main(argv=None):
+    # Đọc tên lệnh và tham số Terminal: --run chọn lần chạy, --event chọn sự kiện đối chiếu.
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["samples", "log", "result", "event", "timeline", "all", "seeds", "benchmark-log", "benchmark-threshold", "1", "2", "3", "4"])
     parser.add_argument("--run", type=Path, default=os.environ.get("DT049_RUN"), help="Run đã lưu; mặc định lấy DT049_RUN do ./show thiết lập. Không tự chọn run mới nhất.")

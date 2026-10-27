@@ -15,6 +15,9 @@ Methodological rules:
 6. Zero test data (test1-test5) or attack labels are accessed or evaluated.
 """
 
+# QUÁ TRÌNH HỌC: dự đoán tín hiệu bình thường -> tính lỗi MSE -> cập nhật trọng số.
+# train_single_run học một mô hình; main điều phối chọn cửa sổ, so sánh seed và chọn ngưỡng.
+
 import os
 import sys
 import gc
@@ -81,6 +84,7 @@ def set_seed(seed: int):
     Sets seeds across random, numpy, and torch.
     Requests deterministic algorithms where supported.
     """
+    # Cố định nguồn số ngẫu nhiên cho khởi tạo mô hình và các thao tác lấy mẫu.
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -126,6 +130,7 @@ def evaluate_model_on_loader(
     Evaluates model on loader, returning mean RMSE and raw RMSE score vector.
     Uses float64 accumulation for squared errors.
     """
+    # Đánh giá bằng mô hình hiện có: không tính gradient và không cập nhật trọng số.
     model.eval()
     all_scores = []
 
@@ -135,11 +140,12 @@ def evaluate_model_on_loader(
             by = by.to(device)
             pred = model(bx)
             diff = (by - pred).cpu().numpy().astype(np.float64)
-            # RMSE per sample across 79 features
+            # Tại mỗi thời điểm: bình phương lỗi của 79 tín hiệu, lấy trung bình rồi căn.
             batch_rmse = np.sqrt(np.mean(diff ** 2, axis=1)).astype(np.float32)
             all_scores.append(batch_rmse)
 
     scores_vec = np.concatenate(all_scores)
+    # Trả cả lỗi trung bình toàn bộ mẫu và dãy RMSE để chọn ngưỡng sau này.
     mean_rmse = float(np.mean(scores_vec.astype(np.float64)))
     return mean_rmse, scores_vec
 
@@ -160,11 +166,13 @@ def train_single_run(
     set_seed(seed)
     t0_run = time.time()
 
-    # Datasets
+    # train_arrays chứa train1 + train2; val_arrays chứa train3 bình thường.
+    # Dataset tách cửa sổ trong từng phiên; stride lấy từ cấu hình.
     train_ds = SessionWindowDataset(train_arrays, window_size=W, stride=config["data"]["development_training"]["stride"])
     val_ds = SessionWindowDataset(val_arrays, window_size=W, stride=config["data"]["normal_validation"]["selection_stride"])
 
-    # DataLoader with seeded generator for shuffling
+    # DataLoader gom các cửa sổ thành nhóm mẫu (batch) để xử lý cùng lúc.
+    # shuffle đổi thứ tự các cửa sổ, vẫn giữ thứ tự thời gian bên trong mỗi cửa sổ.
     g = torch.Generator()
     g.manual_seed(seed)
     train_loader = DataLoader(
@@ -181,6 +189,7 @@ def train_single_run(
         num_workers=config["training"]["num_workers"],
     )
 
+    # Tạo GRU theo cấu hình; .to(device) đưa mô hình đến thiết bị tính toán đã chọn.
     model = OneStepGRU(
         input_size=config["model"]["input_size"],
         hidden_size=config["model"]["hidden_size"],
@@ -238,6 +247,7 @@ def train_single_run(
             # 3. ĐIỀU CHỈNH: Adam dùng gradient để cập nhật trọng số, nhằm giảm lỗi.
             optimizer.step()
 
+            # Cộng lỗi theo số mẫu, để nhóm cuối ít mẫu không bị tính trọng số quá lớn.
             train_loss_sum += loss.item() * len(by)
             train_samples += len(by)
 
@@ -260,7 +270,7 @@ def train_single_run(
             "val_duration_sec": round(val_dur, 2),
         })
 
-        # Early Stopping check
+        # Chỉ lưu bản mới nếu lỗi validation giảm vượt min_delta so với bản tốt nhất.
         if best_val_rmse - val_rmse > min_delta:
             best_val_rmse = val_rmse
             best_epoch = epoch
@@ -279,6 +289,7 @@ def train_single_run(
             )
             improved_mark = " *BEST*"
         else:
+            # Đếm số vòng liên tiếp chưa cải thiện đủ trên validation.
             patience_counter += 1
             improved_mark = ""
 
@@ -288,6 +299,7 @@ def train_single_run(
             f"Val: {val_dur:.1f}s | Patience: {patience_counter}/{patience}{improved_mark}"
         )
 
+        # Dừng sớm khi đủ patience vòng không cải thiện; giữ checkpoint tốt nhất đã lưu.
         if patience_counter >= patience:
             logger.info(f"Early stopping triggered at epoch {epoch}. Best epoch was {best_epoch} (Val RMSE: {best_val_rmse:.6f}).")
             break
@@ -347,7 +359,7 @@ def main():
     logger.info(f"OneStepGRU Trainable Parameters: {param_count:,} (Expected: 32,975)")
     del dummy_model
 
-    # Load preprocessed arrays as memory-maps
+    # Đọc mảng đã chuẩn hóa ở chế độ chỉ đọc; train1 + train2 dùng học, train3 dùng validation.
     t1_f = np.load(PROCESSED_DIR / "train1_features.npy", mmap_mode="r")
     t2_f = np.load(PROCESSED_DIR / "train2_features.npy", mmap_mode="r")
     t3_f = np.load(PROCESSED_DIR / "train3_features.npy", mmap_mode="r")
@@ -360,6 +372,7 @@ def main():
     # =========================================================================
     # STAGE A: Window-Length Selection (W in [10, 30, 60], seed=42)
     # =========================================================================
+    # Thử các độ dài cửa sổ với cùng seed; chọn bằng lỗi validation, không dùng test.
     candidate_windows = config["window_selection"]["candidate_windows"]
     stage_a_seed = config["window_selection"]["stage_a_seed"]
     stage_a_records = []
@@ -406,6 +419,7 @@ def main():
     stage_a_df.to_csv(window_selection_csv, index=False)
     logger.info(f"Saved Stage A Window Selection Table: {window_selection_csv}")
 
+    # Cửa sổ được chọn là cửa sổ có RMSE validation thấp nhất trong các lần thử.
     best_stage_a = min(stage_a_records, key=lambda r: r["best_val_rmse_s5"])
     selected_window = best_stage_a["window_size"]
     selected_w_margin = {}
@@ -422,6 +436,7 @@ def main():
     # =========================================================================
     # STAGE B: Three-Seed Stability for Selected Window (seeds 43 and 44)
     # =========================================================================
+    # Giữ cửa sổ đã chọn, so sánh seed 42/43/44 để xem kết quả thay đổi theo lần khởi tạo.
     final_seeds = config["multiseed_stability"]["final_seeds"]  # [42, 43, 44]
     logger.info("=================================================================")
     logger.info(f"STAGE B: Three-Seed Stability for W* = {selected_window}")
@@ -455,6 +470,7 @@ def main():
     logger.info("Calibrating Q99.5, Q99.9 (Primary), and Q99.99 Empirical Quantiles...")
     logger.info("=================================================================")
 
+    # Tính RMSE trên train3 từng giây để chọn ngưỡng, sau khi đã chọn cửa sổ và checkpoint.
     val_ds_full = SessionWindowDataset(val_arrays, window_size=selected_window, stride=1)
     val_loader_full = DataLoader(val_ds_full, batch_size=512, shuffle=False, num_workers=0)
     val_full_exposure_seconds = len(val_ds_full)
@@ -484,7 +500,8 @@ def main():
         eval_full_dur = time.time() - t0_full
         seed_scores_dict[seed] = val_scores
 
-        # Quantile thresholds
+        # Ngưỡng là phân vị của sai số train3 bình thường; Q99.9 không phải độ chính xác 99,9%.
+        # Các ngưỡng được tính riêng cho từng seed, không gán một số cố định cho mọi mô hình.
         q99_5_thresh = float(np.quantile(val_scores, 0.995, method="linear"))
         q99_9_thresh = float(np.quantile(val_scores, 0.999, method="linear"))
         q99_99_thresh = float(np.quantile(val_scores, 0.9999, method="linear"))
