@@ -1,5 +1,8 @@
 # Giữa kỳ: demo terminal một sự kiện GRU
 
+Nhánh `main` dùng cho GRU Terminal. UI, DNN và các phân tích bổ sung được giữ
+nguyên trên nhánh `full-project`; Kali đang ở `main` chỉ cần `git pull --ff-only origin main`.
+
 ## Chuẩn bị trước giờ bảo vệ
 
 - Vào đúng thư mục repo trên Kali, kiểm tra `.venv/bin/python` và `show` có sẵn.
@@ -91,7 +94,8 @@ không tự chuyển trạng thái hoặc sửa metric.
   Không dùng ngưỡng này thay cho khoảng 1.605896 của run demo mẫu.
 - **5/5 có phải chính xác 100%?** Không. Vẫn có cảnh báo không khớp nhãn;
   xem Event F1 và Normal FA/h bằng chế độ chi tiết.
-- **DNN ở đâu?** Đã triển khai thí nghiệm bổ sung và lưu trong `backupcuoiki/`.
+- **DNN ở đâu?** Đã triển khai thí nghiệm bổ sung và lưu trong `backupcuoiki/`
+  trên nhánh `full-project`.
   Giữa kỳ chỉ trình diễn GRU. Bài báo Kuchař & Fujdiak (2025) dùng DNN;
   không gán GRU cho các tác giả, không nói đã tái lập nguyên bản 100%.
 

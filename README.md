@@ -5,6 +5,45 @@ ngưỡng chọn trên dữ liệu bình thường và đối chiếu cảnh bá
 PyTorch cung cấp `nn.GRU`, `nn.MSELoss` và `torch.optim.Adam`; dự án xây dựng
 quy trình dữ liệu, cửa sổ thời gian, huấn luyện, chọn ngưỡng và đánh giá trên HAI.
 
+## Hai nhánh của dự án
+
+- `main`: bản gọn cho GRU Terminal giữa kỳ; giữ nguyên code GRU, tiền xử lý,
+  đánh giá và các model/kết quả nghiên cứu chính thức.
+- [`full-project`](https://github.com/tuvyyy/DT049_NguyenNgocTuVy_1150070050_11TMDT_ATBMHTTT/tree/full-project):
+  bản đầy đủ có Streamlit, DNN trong `backupcuoiki/`, tài liệu và các phân tích bổ sung.
+
+Kali đang dùng `main` thì chỉ cần cập nhật code; giữ nguyên `.venv`, dữ liệu HAI
+và thư mục run đã có:
+
+```bash
+git pull --ff-only origin main
+```
+
+Khi cần mở lại bản đầy đủ:
+
+```bash
+git fetch origin
+git switch full-project
+# Quay về bản GRU Terminal:
+git switch main
+```
+
+Đổi nhánh sẽ đổi các file do Git quản lý. Dữ liệu HAI, run và môi trường Python
+bị Git bỏ qua nên không được đồng bộ giữa hai máy bằng các lệnh này.
+
+Các file chính cần đọc trên `main`:
+
+| File | Vai trò |
+| --- | --- |
+| `src/gru_dataset.py` | Tạo cửa sổ dữ liệu đầu vào. |
+| `src/gru_model.py` | Cấu trúc GRU và dự đoán tín hiệu kế tiếp. |
+| `src/train_gru.py` | Huấn luyện, chọn checkpoint và ngưỡng benchmark. |
+| `demo/show_event.py` | Các lệnh Terminal đọc kết quả và tính lại dự đoán. |
+
+`src/preprocess.py`, `src/preprocess_test.py` và `src/evaluate_final_test.py`
+được giữ để đối chiếu quy trình dữ liệu và đánh giá. `models/`, `results/`
+và `configs/` giữ nguyên nội dung nghiên cứu.
+
 ## Demo terminal khoảng 60 giây
 
 Trong thư mục repo trên Kali, với môi trường `.venv` và run đã chuẩn bị:
@@ -60,6 +99,8 @@ python3 -m venv .venv
 
 Nếu `.venv` đã chạy được thì giữ nguyên. Demo terminal cần NumPy, PyTorch và PyYAML;
 các lệnh `./show` không mở Streamlit và không tự huấn luyện.
+Lock file trên `main` đã bỏ các thư viện chỉ phục vụ UI; phiên bản các thư viện
+GRU/xử lý dữ liệu giữ theo bản đầy đủ trên `full-project`.
 
 ## Dữ liệu HAI 21.03
 
@@ -82,8 +123,9 @@ liên tục từng giây. Nhãn `attack` không được đưa vào đầu vào 
 Scaler được học bằng train1+train2; train3 dùng kiểm định/chọn ngưỡng;
 test1–test5 chỉ biến đổi bằng scaler đã lưu, không fit lại.
 
-Mã chuẩn bị dữ liệu nằm ở `src/preprocess.py`, `src/preprocess_test.py` và
-`demo/be/gru_runtime.py`. `preprocess.py` có ghi lại scaler, nên không chạy nó
+Mã chuẩn bị dữ liệu nằm ở `src/preprocess.py` và `src/preprocess_test.py`.
+Phần tạo run qua UI nằm trong `demo/be/gru_runtime.py` trên nhánh `full-project`.
+`preprocess.py` có ghi lại scaler, nên không chạy nó
 chỉ để xem demo hoặc trên bộ artifact đang cần bảo toàn. Chuẩn bị dữ liệu từ
 đầu là công việc riêng; tải CSV không tự tạo ra checkpoint hay run mẫu.
 
@@ -111,7 +153,8 @@ run được chọn; không chỉnh số cho giống mẫu. Metric nghiên cứu
 5/5 sự kiện khớp nhãn không có nghĩa tất cả cảnh báo đều đúng.
 
 DNN **đã được triển khai** như thí nghiệm bổ sung có điều chỉnh; hiện được lưu
-ở [`backupcuoiki/`](backupcuoiki/README.md), không trình diễn giữa kỳ.
+ở [`full-project/backupcuoiki/`](https://github.com/tuvyyy/DT049_NguyenNgocTuVy_1150070050_11TMDT_ATBMHTTT/tree/full-project/backupcuoiki),
+không trình diễn giữa kỳ.
 Bài báo Kuchař & Fujdiak (2025) dùng DNN, không phải GRU; không gọi phần GRU
 của dự án là tái lập nguyên bản bài báo.
 
@@ -119,13 +162,12 @@ của dự án là tái lập nguyên bản bài báo.
 
 ```bash
 .venv/bin/python -B -m unittest discover -s tests -p 'test_*.py' -v
-.venv/bin/python -B demo/check_product.py
 ```
 
 Kiểm thử terminal dùng dữ liệu tổng hợp và trọng số kiểm thử để kiểm tra lỗi,
 phép tính RMSE và tính chỉ đọc. Chúng không chứng minh thực nghiệm HAI thật
 đã được xác minh. Ở đợt rà soát này, môi trường Codex không có run demo/dữ liệu
-HAI cục bộ; cần chạy lại ba lệnh và đối chiếu trực tiếp trên Kali.
+HAI cục bộ; cần chạy lại bốn lệnh và đối chiếu trực tiếp trên Kali.
 
-Dashboard vẫn khởi động bằng `bash demo/run_dashboard.sh` khi cần tra cứu;
-không cần mở trong buổi demo terminal.
+Kiểm tra Dashboard bằng `demo/check_product.py` và chạy UI bằng
+`bash demo/run_dashboard.sh` sau khi chuyển sang nhánh `full-project`.
