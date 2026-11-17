@@ -62,6 +62,29 @@ python3 -m venv .venv
 Kiểm tra code: `.venv/bin/python -B -m unittest discover -s tests -p 'test_*.py' -v`.
 Test tự động không thay thế việc xác minh với dữ liệu HAI thật trên Kali.
 
+## Chạy lại GRU và đối chiếu kết quả
+
+Script [`DT049_replay_GRU_readonly.py`](DT049_replay_GRU_readonly.py) nạp checkpoint GRU seed 42 đã lưu, suy luận lại trên HAI 21.03 và so sánh từng chỉ số với các bảng CSV trong `results/metrics/`. Script **chỉ đọc**, không huấn luyện lại, không điều chỉnh ngưỡng, không ghi đè checkpoint hoặc kết quả.
+
+Trên Kali, tại thư mục gốc dự án, khi đã có dữ liệu HAI và môi trường `.venv`:
+
+```bash
+# Kiểm tra kỹ thuật mạng bằng dữ liệu GIẢ LẬP; không phải chạy HAI
+./.venv/bin/python DT049_replay_GRU_readonly.py --smoke
+
+# Chạy lại riêng test1 trước
+./.venv/bin/python DT049_replay_GRU_readonly.py --repo . --session test1
+
+# Chạy lại đủ test1–test5 và đối chiếu benchmark
+./.venv/bin/python DT049_replay_GRU_readonly.py --repo .
+```
+
+Script sử dụng cấu hình cố định của benchmark: 30 thời điểm đầu vào, 79 tín hiệu, checkpoint `models/primary/gru_w30_seed42.pt` và ngưỡng Q99.9 = `1.0585819482803345`. Dữ liệu được nạp từ các mảng `.npy` có sẵn (đối chiếu SHA-256 theo manifest), hoặc từ CSV HAI gốc kết hợp scaler đã khóa. Nếu thiếu file, sai hash hoặc sai cấu trúc dữ liệu, script dừng; **clone GitHub không kèm dữ liệu HAI**.
+
+Đầu ra in `replay`, `saved`, `delta` và `MATCH/DIFF` cho TP, FN, cảnh báo không khớp, Event Recall, Event F1, cảnh báo sai/giờ và độ trễ phát hiện trung bình. Kết quả tham chiếu đã lưu cho seed 42 là **40/50 sự kiện phát hiện**, Event Recall **80%**, Event F1 **18,82%**, **2,822** cảnh báo sai/giờ bình thường. Các số này chỉ được xác nhận *chạy lại* khi lệnh trên Kali hoàn tất và in `MATCH`.
+
+Bài báo Kuchař & Fujdiak (2025) báo cáo Accuracy phân loại bốn trạng thái trên một bộ dữ liệu robot khác; không lấy các chỉ số GRU trên HAI để tính chênh lệch Accuracy trực tiếp với bài báo.
+
 ## Đổi nhánh
 
 Kali đang ở `main`: `git pull --ff-only origin main`.
